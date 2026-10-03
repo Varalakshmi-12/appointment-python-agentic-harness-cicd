@@ -22,6 +22,7 @@ To widen access, open a pull request with: the proposed grant, a concrete justif
 
 **Version:** v1.0.0
 **Defined in:** agents/appt-orchestrator.md
+**Container permissions:** workspace read-write, memory mounted
 
 ### MCP server and operation access
 | Operation    | Server    | Granted | Justification / Denial reason |
@@ -54,6 +55,7 @@ To widen access, open a pull request with: the proposed grant, a concrete justif
 
 **Version:** v1.0.0
 **Defined in:** agents/appt-planner.md
+**Container permissions:** workspace read-only, memory omitted
 
 ### MCP server and operation access
 | Operation    | Server    | Granted | Justification / Denial reason |
@@ -85,6 +87,7 @@ To widen access, open a pull request with: the proposed grant, a concrete justif
 
 **Version:** v1.0.0
 **Defined in:** agents/appt-implementer.md
+**Container permissions:** workspace read-write, memory mounted
 
 ### MCP server and operation access
 | Operation    | Server    | Granted | Justification / Denial reason |
@@ -117,6 +120,7 @@ To widen access, open a pull request with: the proposed grant, a concrete justif
 
 **Version:** v1.0.0
 **Defined in:** agents/appt-security-reviewer.md   (runs as AGENT_ROLE=reviewer)
+**Container permissions:** workspace read-only, memory omitted
 
 ### MCP server and operation access
 | Operation    | Server    | Granted | Justification / Denial reason |
@@ -148,6 +152,7 @@ To widen access, open a pull request with: the proposed grant, a concrete justif
 
 **Version:** v1.0.0
 **Defined in:** agents/appt-tester.md
+**Container permissions:** workspace read-only, memory omitted
 
 ### MCP server and operation access
 | Operation    | Server    | Granted | Justification / Denial reason |
@@ -189,6 +194,7 @@ These come from near-misses that are not per-role (calibration-log.md):
 
 **Version:** v1.0.0
 **Defined in:** agents/appt-project-manager.md
+**Container permissions:** workspace read-only, memory omitted
 
 ### MCP server and operation access
 | Operation    | Server    | Granted | Justification / Denial reason |
