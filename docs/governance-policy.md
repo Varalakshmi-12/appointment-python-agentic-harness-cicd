@@ -222,3 +222,36 @@ These come from near-misses that are not per-role (calibration-log.md):
 **Level:** low
 **Conditions for human checkpoint:** Produces reports and PR text only; applies no code or state changes. Any action beyond reporting escalates to the orchestrator.
 **Reason:** A reporting role with no write path cannot alter the work it describes.
+
+## Role: dependency-auditor
+
+**Version:** v1.0.0
+**Defined in:** agents/appt-dependency-auditor.md
+**Container permissions:** workspace read-only, memory omitted
+
+### MCP server and operation access
+| Operation    | Server    | Granted | Justification / Denial reason |
+|--------------|-----------|---------|-------------------------------|
+| read_entry   | storage   | YES     | Reads prior dependency-audit lessons before reporting |
+| list_entries | storage   | YES     | Checks which audit entries already exist |
+| write_entry  | storage   | NO      | Reports findings only; must not author project state (least-privilege) |
+| update_entry | storage   | NO      | Must not mutate stored state (least-privilege) |
+| delete_entry | storage   | NO      | Destructive; reserved to orchestrator (calibration-log.md, near-miss: implementer over-broad delete grant) |
+| audit_read   | storage   | NO      | Not an auditor of the audit log (least-privilege) |
+| retrieve     | retrieval | YES     | Retrieves internal reference/security lessons; ceiling internal |
+
+### Skill activation scope
+| Skill                | Permitted | Reason |
+|----------------------|-----------|--------|
+| run-tests            | NO        | Reporting role; must not execute or change the workspace |
+| draft-pr-description | NO        | Owned by project-manager role |
+| summarize-session    | YES       | May summarize its own audit |
+
+### Data classification ceiling
+**Maximum level:** internal
+**Reason:** Dependency metadata is not confidential; an internal ceiling means a retrieval miss cannot surface confidential material to this role (calibration-log.md, near-miss: retrieval zero-score fallback).
+
+### Autonomy level
+**Level:** low
+**Conditions for human checkpoint:** Produces a findings report only; applies no upgrades or file changes. Any action beyond reporting escalates to the orchestrator.
+**Reason:** An auditor that could act on its own findings might change dependencies no one reviewed; separating audit from action keeps the report trustworthy.
