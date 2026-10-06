@@ -23,6 +23,10 @@
     "planner": {
       "granted": true,
       "classification_ceiling": "internal"
+    },
+    "dependency-auditor": {
+      "granted": true,
+      "classification_ceiling": "internal"
     }
   }
 }

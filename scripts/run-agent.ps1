@@ -23,7 +23,7 @@ switch ($Role) {
         $WorkspaceMode = 'rw'
         $MountMemory = $true
     }
-    { $_ -in 'planner', 'reviewer', 'tester', 'project-manager' } {
+    { $_ -in 'planner', 'reviewer', 'tester', 'project-manager', 'dependency-auditor' } {
         $WorkspaceMode = 'ro'
         $MountMemory = $false
     }
