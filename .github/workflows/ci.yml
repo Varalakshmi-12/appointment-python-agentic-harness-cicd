@@ -77,6 +77,17 @@ jobs:
           retention-days: 90
           if-no-files-found: ignore
 
+  test:
+   name: Test Suite
+   needs: policy-gate
+   runs-on: ubuntu-latest
+   steps:
+     - uses: actions/checkout@v4
+     # ...the rest of the baseline job from Section 1        
+
+    
+  
+
   governed-file-gate:
     name: Governed File Check
     runs-on: ubuntu-latest
