@@ -239,3 +239,5 @@ __marimo__/
 # Target app source — lives in its own repo; keep out of the harness repo
 /appointment-backend/
 /appointment-frontend/
+.claude/
+*.bak
