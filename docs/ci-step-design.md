@@ -34,3 +34,11 @@
 - Produces: `ci-audit-trail-[sha].json` artifact and PR comment.
 - Classification: required operational evidence; always runs.
 - Credentials: GitHub token with pull-request comment permission.
+
+## Step: Automated code review
+- Does: Reviewer subagent scores changed files against the rubric and posts a PR comment.
+- Input: changed files in the pull request.
+- Produces: a structured review comment.
+- Classification: advisory (new; promote to gating once stable).
+- Time limit: 15 minutes.
+- Credentials: OPENROUTER_API_KEY, scoped to this step only.
