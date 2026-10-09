@@ -158,6 +158,38 @@ jobs:
           retention-days: 90
           if-no-files-found: ignore
 
+
+  pipeline-integrity:
+    name: Pipeline Integrity Check
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+ 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+ 
+      - name: Install PyYAML
+        run: pip install pyyaml
+ 
+      - name: Check pipeline integrity
+        run: |
+          mkdir -p ci-artifacts
+          python scripts/check-pipeline-integrity.py > ci-artifacts/pipeline-integrity-report.txt 2>&1 || EXIT=$?
+          cat ci-artifacts/pipeline-integrity-report.txt
+          exit ${EXIT:-0}
+
+      - name: Upload pipeline-integrity report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-integrity-report
+          path: ci-artifacts/pipeline-integrity-report.txt
+          retention-days: 90
+          if-no-files-found: ignore
+
+
   audit-trail:
     name: Audit Trail
     runs-on: ubuntu-latest
