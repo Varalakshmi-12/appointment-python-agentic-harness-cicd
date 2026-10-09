@@ -1,12 +1,14 @@
 {
   "mcpServers": {
     "storage": {
-      "type": "http",
-      "url": "http://localhost:8001/mcp"
+      "command": "python3",
+      "args": ["/workspace/mcp-servers/storage/server.py"],
+      "env": { "AGENT_ROLE": "orchestrator" }
     },
     "retrieval": {
-      "type": "http",
-      "url": "http://localhost:8002/mcp"
+      "command": "python3",
+      "args": ["/workspace/mcp-servers/retrieval/server.py"],
+      "env": { "AGENT_ROLE": "orchestrator" }
     }
   }
 }
