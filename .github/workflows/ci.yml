@@ -142,7 +142,7 @@ jobs:
             -v "$GITHUB_WORKSPACE":/workspace:ro \
             -v "$GITHUB_WORKSPACE/ci-out":/out \
             -w /workspace \
-            -e ANTHROPIC_API_KEY \
+            -e OPENROUTER_API_KEY \
             -e CHANGED_FILES="${{ needs.change-type-check.outputs.changed-files }}" \
             agentic_engineer_4 \
             python scripts/run-reviewer.py
