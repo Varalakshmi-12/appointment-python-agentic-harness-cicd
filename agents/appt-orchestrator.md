@@ -32,14 +32,16 @@ only for handoff briefs and the final summary, never for source code.
 Goal: address a reported backend issue in the appointment app. Accepted only when:
 - the change addresses the reported issue,
 - the appt-security-reviewer reports no unresolved Critical findings, and
-- the appt-tester reports all tests passing.
+- the deterministic test step (scripts/run_tests_deterministic.py) reports status "pass".
 
 ### Standard sequence
 1. appt-planner            receives: issue text + repo path
 2. appt-implementer        receives: plan + file list
 3. appt-security-reviewer  receives: modified files
-4. appt-tester             receives: modified files
-
+4. Deterministic test step (no subagent). Run:
+     python scripts/run_tests_deterministic.py --tests eval/ --output result.json
+   Read result.json. If "status" is not "pass", loop back to appt-implementer with the
+   "output_tail". Do not delegate this step to a subagent (converted to code, ADR-001).
 ### Evaluation gate
 After each subagent returns, check its result against that phase's acceptance criteria BEFORE
 invoking the next role. Pass forward only a result that meets the criteria.
@@ -47,8 +49,8 @@ invoking the next role. Pass forward only a result that meets the criteria.
 ### Branching logic
 - Loop: if appt-security-reviewer reports any Critical finding, loop back to appt-implementer with
   the review report, then re-run appt-security-reviewer.
-- Loop: if appt-tester reports any failing test, loop back to appt-implementer with the failures,
-  then re-run appt-tester.
+- Loop: if the deterministic test step reports "status" other than "pass" (fail or error), loop
+  back to appt-implementer with the "output_tail", then re-run the deterministic test step.
 - Halt and escalate: if the same phase fails its gate twice in a row, stop and escalate to the human.
 
 ### Human-in-the-loop checkpoints

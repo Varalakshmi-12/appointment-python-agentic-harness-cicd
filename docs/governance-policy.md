@@ -148,38 +148,7 @@ To widen access, open a pull request with: the proposed grant, a concrete justif
 **Conditions for human checkpoint:** Advisory only; may not apply changes. Any action beyond findings escalates to the orchestrator.
 **Reason:** A review role that can change state can quietly alter the work it is meant to inspect.
 
-## Role: tester
 
-**Version:** v1.0.0
-**Defined in:** agents/appt-tester.md
-**Container permissions:** workspace read-only, memory omitted
-
-### MCP server and operation access
-| Operation    | Server    | Granted | Justification / Denial reason |
-|--------------|-----------|---------|-------------------------------|
-| read_entry   | storage   | YES     | Reads state to know what to test |
-| list_entries | storage   | YES     | Checks existing entries |
-| write_entry  | storage   | NO      | Reports pass/fail; must not mutate state (least-privilege) |
-| update_entry | storage   | NO      | Same |
-| delete_entry | storage   | NO      | Same |
-| retrieve     | retrieval | YES     | Retrieves reference context; ceiling internal |
-
-### Skill activation scope
-| Skill                | Permitted | Reason |
-|----------------------|-----------|--------|
-| run-tests            | YES       | Core tester responsibility |
-| draft-pr-description | NO        | Owned by project-manager role |
-| summarize-session    | YES       | May summarize its own test run |
-
-### Data classification ceiling
-**Maximum level:** internal
-**Reason:** Testing internal work needs no confidential data.
-
-### Autonomy level
-**Level:** low
-**Conditions for human checkpoint:** Reports results only; does not apply fixes. Failures route back through the orchestrator.
-**Reason:** Separating test execution from code change keeps the verification signal trustworthy.
-**Note:** The test-execution tool is not yet wired in this environment (recorded gap); this grant is written ahead of enforcement.
 
 ## Cross-cutting enforcement rules
 
@@ -255,3 +224,11 @@ These come from near-misses that are not per-role (calibration-log.md):
 **Level:** low
 **Conditions for human checkpoint:** Produces a findings report only; applies no upgrades or file changes. Any action beyond reporting escalates to the orchestrator.
 **Reason:** An auditor that could act on its own findings might change dependencies no one reviewed; separating audit from action keeps the report trustworthy.
+
+## Deterministic conversion history
+
+- tester: converted from agent to deterministic code. Test execution is now
+  scripts/run_tests_deterministic.py (runs the project's test suite; reports
+  pass / fail / error). The agentic tester role and its MCP tool grants are
+  retired — least-privilege removes access the moment it is no longer needed.
+  See ADR-001.

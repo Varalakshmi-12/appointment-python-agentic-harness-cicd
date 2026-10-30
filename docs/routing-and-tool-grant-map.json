@@ -3,6 +3,5 @@
   "planner": ["retrieve"],
   "implementer": ["write_entry"],
   "reviewer": ["retrieve"],
-  "quality_reviewer": ["retrieve"],
-  "tester": []
+  "quality_reviewer": ["retrieve"]
 }
