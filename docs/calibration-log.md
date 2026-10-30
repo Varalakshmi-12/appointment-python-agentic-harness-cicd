@@ -99,3 +99,33 @@ fix) live on the calibrated system, in a fresh Claude Code session.
 - **Retrieval zero-score fallback.** On a query that matched nothing, the retrieval server
   returned top_k documents anyway, including a confidential one up to the role's ceiling —
   turning a search miss into a classification leak.
+
+## 2026-10-29: Deterministic conversion — appt-tester (ADR-001)
+
+- **Step converted:** appt-tester (run tests, report pass/fail) → deterministic
+  script scripts/run_tests_deterministic.py. See ADR-001.
+
+- **Before (agentic appt-tester):** NON-FUNCTIONAL. The appt-tester has no working
+  test-execution tool in this environment (coursetools test_runner missing, Bash
+  disallowed, Holdout gap #2), so the step never completed and the pipeline halted
+  at the tester gate. Latency / token cost / rubric score: N/A — the step did not run.
+  This non-functional baseline is the motivation for the conversion.
+
+- **After (deterministic script):**
+  - Latency: ~2.3s wall-clock in the container across 3 runs (2.22s, 2.22s, 2.29s);
+    of that, pytest execution itself was ~0.18s, the rest is interpreter/pytest startup.
+  - Token cost: $0 (no model call).
+  - Predictability: verdict identical across all 3 runs (status "pass", exit_code 0).
+    The only run-to-run difference was pytest's embedded duration string in the log
+    tail ("6 passed in 0.17s" vs "0.19s"), which is log detail, not a decision.
+  - Audit clarity: the whole script is ~50 readable lines; a reviewer understands it
+    without a transcript. classify_exit_code is a pure function covered by unit tests.
+  - Quality: eval/test_deterministic_step.py passes 6/6, including the three-state
+    (pass / fail / error) limitation. No existing deterministic harness check regressed
+    (the conversion adds a step; it removes none of the governance checks).
+
+- **Regression check:** none of the deterministic governance checks (forbidden_operations,
+  tool_grants, audit_matches_writes, no_unknown_caller) depend on appt-tester, so the
+  conversion causes no regression. The tester gate now completes instead of halting.
+
+- **Evidence:** implementation commit 33e40ba; unit-test run 6/6 passing in container.
