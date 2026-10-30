@@ -1,7 +1,10 @@
 # ADR-001: Convert the appt-tester step from agent to deterministic code
 
 ## Status
-Proposed
+Accepted
+
+Accepted 2026-10-30: integrated as one revertible commit; local policy suite + deterministic
+tests pass (11/11) and the CI governed pipeline is green end-to-end, with no regression.
 
 ## Context
 The orchestration delegates test execution to the appt-tester subagent, which is
