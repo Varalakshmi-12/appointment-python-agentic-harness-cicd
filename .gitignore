@@ -237,7 +237,13 @@ __marimo__/
 **/node_modules/
 
 # Target app source — lives in its own repo; keep out of the harness repo
-/appointment-backend/
-/appointment-frontend/
+
 .claude/
 *.bak
+
+# App code is tracked, but keep secrets and build output OUT:
+appointment-backend/.env
+appointment-backend/test_mysql.py
+appointment-frontend/node_modules/
+appointment-frontend/dist/
+appointment-frontend/build/
