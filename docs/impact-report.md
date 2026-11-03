@@ -1,7 +1,7 @@
 # Impact Report
 ## Baseline vs. After + Tool-Evolution Drill Summary
 
-**Author:** Chetan · **Date:** 2026-10-30
+**Author:** Varalakshmi · **Date:** 2026-10-30
 **Delivery path:** Job-seeker / no-deployment (representative workflow)
 
 This report compares the Module 1 baseline against the post-capstone system across

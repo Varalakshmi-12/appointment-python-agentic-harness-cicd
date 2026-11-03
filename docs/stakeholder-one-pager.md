@@ -1,7 +1,7 @@
 # AI Agents That Teams Can Actually Trust
 ### A governed multi-agent system for engineering work — business one-pager
 
-**Prepared by:** Chetan · 2026-10-30
+**Prepared by:** Varalakshmi· 2026-10-30
 
 ---
 
