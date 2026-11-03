@@ -1,12 +1,12 @@
 {
   "mcpServers": {
     "storage": {
-      "type": "http",
-      "url": "http://localhost:8001/mcp"
+      "command": "python",
+      "args": ["mcp-servers/storage/server.py"]
     },
     "retrieval": {
-      "type": "http",
-      "url": "http://localhost:8002/mcp"
+      "command": "python",
+      "args": ["mcp-servers/retrieval/server.py"]
     }
   }
 }
