@@ -1,0 +1,9 @@
+{
+  "status": "pass",
+  "exit_code": 0,
+  "tests_path": "appointment-backend/test_status_route.py",
+  "output_tail": [
+    ".......................                                                  [100%]",
+    "23 passed in 1.03s"
+  ]
+}
