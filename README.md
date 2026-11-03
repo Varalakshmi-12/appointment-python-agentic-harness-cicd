@@ -1,3 +1,206 @@
+# Governed Multi-Agent Engineering Pipeline — Appointment App
+
+A containerized, governed, multi-agent engineering pipeline for an appointment-scheduling
+application (Flask + MySQL backend, React frontend). An orchestrator delegates to
+least-privilege subagents (planner, implementer, reviewer, tester, project-manager) that
+reach tools only through audited MCP servers, with evaluation, CI/CD guardrails, and
+right-tool (agent → deterministic) conversions.
+
+**A reviewer can fork, run the pipeline end-to-end, and see governance block an
+over-reaching agent in under 15 minutes by following this README.**
+
+---
+
+## 1. Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+- An **OpenRouter API key** (free to create at [openrouter.ai](https://openrouter.ai)),
+  restricted to the model `anthropic/claude-haiku-4.5`.
+- ~2 GB free disk for the image.
+- Windows users: the run commands below are given for **PowerShell**; a Git Bash / WSL
+  variant is noted where it differs.
+
+No local Python or Node setup is required — everything runs inside the container.
+
+## 2. Environment variables
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `OPENROUTER_API_KEY` | **Yes** | Model access (scope it to `anthropic/claude-haiku-4.5`). Injected at runtime with `-e`; never baked into the image. |
+| `AGENT_ROLE` | Yes for a run | The role the container runs as (`orchestrator`, `implementer`, `reviewer`, …). Sets least-privilege scope and audit identity. |
+| `SLACK_BOT_TOKEN`, `SLACK_TEAM_ID` | Optional | Only needed for the Slack notification tool; the core pipeline does not require them. |
+| `STORAGE_AUDIT_LOG`, `RETRIEVAL_AUDIT_LOG` | Optional | Override audit-log paths (default `logs/…`). |
+
+> **Never commit secrets.** `.env` and `appointment-backend/test_mysql.py` (which carries a
+> local DB password) are gitignored. Set the key in your shell before running:
+> ```powershell
+> $env:OPENROUTER_API_KEY = "sk-or-v1-…"   # PowerShell
+> ```
+> ```bash
+> export OPENROUTER_API_KEY="sk-or-v1-…"   # bash
+> ```
+
+## 3. Get the image
+
+Pull the prebuilt image (fastest):
+```bash
+docker pull heatonresearch/agentic_engineer_4
+docker tag heatonresearch/agentic_engineer_4 agentic_engineer_4
+```
+…or build it from the repo:
+```bash
+docker build -t agentic_engineer_4 .
+```
+
+## 4. Run the pipeline end-to-end (~5 min)
+
+From the repo root:
+
+**PowerShell**
+```powershell
+docker run -it --rm `
+  -e OPENROUTER_API_KEY=$env:OPENROUTER_API_KEY `
+  -e AGENT_ROLE=orchestrator `
+  -v "${PWD}:/workspace" `
+  -v "${PWD}/.memory:/memory" `
+  agentic_engineer_4
+```
+**bash**
+```bash
+docker run -it --rm \
+  -e OPENROUTER_API_KEY="$OPENROUTER_API_KEY" \
+  -e AGENT_ROLE=orchestrator \
+  -v "$(pwd):/workspace" \
+  -v "$(pwd)/.memory:/memory" \
+  agentic_engineer_4
+```
+The container drops you at a shell inside `/workspace`. Then:
+
+```bash
+claude                 # start the agent runtime
+```
+Inside, confirm the governed tool servers are connected:
+```
+/mcp                   # expect: storage ✔ (6 tools), retrieval ✔ (1 tool)
+```
+Give the orchestrator a task:
+```
+Use the appt-orchestrator to add input validation to the appointment
+status-transition route. Plan first and wait for my approval, then
+implement, security review, and run the tests.
+```
+Approve at the plan checkpoint. The pipeline runs plan → implement → security review →
+deterministic test gate. Audit evidence is written to `logs/storage-audit-log.jsonl`.
+
+> **Role-scoped runs:** `scripts/run-agent.ps1 <role>` (PowerShell) or
+> `scripts/run-agent.sh <role>` (bash) launch the container with the correct
+> read-only / read-write mounts and memory policy for any single role.
+
+## 5. See governance stop an over-reach (~1 min)
+
+The implementer may write but not delete. Inside the container:
+```bash
+AGENT_ROLE=implementer python3 scripts/probe.py mcp-servers/storage/server.py delete_entry
+AGENT_ROLE=implementer python3 scripts/probe.py mcp-servers/storage/server.py write_entry
+```
+Expected:
+```
+DENIED: delete_entry -> authorization_denied: role 'implementer' may not call 'delete_entry'. See docs/governance-policy.md.
+ALLOWED: write_entry
+```
+The denial is recorded in the audit log:
+```bash
+tail -n 3 logs/storage-audit-log.jsonl
+```
+
+## 6. Run the deterministic test step and the eval harness
+
+Deterministic test gate (the agent → code conversion from ADR-001):
+```bash
+python scripts/run_tests_deterministic.py --tests appointment-backend/test_status_route.py --output logs/test-result.json
+```
+Deterministic governance harness (reads an evidence base `<name>.json` + `<name>.log`):
+```bash
+python eval/harness_deterministic.py eval/evidence/<evidence-base>
+```
+
+---
+
+## 7. Repository map — evidence index
+
+Every required artifact and where to find it.
+
+| Required content | Location |
+|---|---|
+| **README & run path** | `README.md` (this file) |
+| **Containerized harness** (fs/network/credential boundaries) | `Dockerfile`, `docker-entrypoint.sh`, `scripts/run-agent.sh`, `scripts/run-agent.ps1` |
+| **Module 1 — PRD** | `docs/lint-prd.md` `docs/import-check-prd.md`|
+| **Module 1 — quality rubric + thresholds** | `docs/import-check-rubric.md`,`docs/lint-rubric.md``eval/rubric.json`, `eval/harness_rubric_suite.py` |
+| **Module 1 — baseline + iteration log** | `docs/appt-iteration-log.md` |
+| **Module 2 — agent definitions** | `agents/appt-orchestrator.md`, `appt-implementer.md`, `appt-security-reviewer.md`, `appt-import-checker.md` |
+| **Module 2 — skills (≥2)** | `skills/`  |
+| **Module 2 — memory layout + notes** | `.memory/`, `docs/memory-architecture.md` |
+| **Module 2 — reflection log** | `docs/calibration-log.md` |
+| **Module 3 — orchestration diagram** | `docs/appt-orchestration-diagram.md` |
+| **Module 3 — routing & tool-grant map** | `docs/routing-and-tool-grant-map.md`, `docs/routing-and-tool-grant-map.json` |
+| **Module 3 — MCP config + schemas** | `.mcp.json`, `mcp-servers/storage/{server.py,schema.json,allow-list.json}`, `mcp-servers/retrieval/…` |
+| **Module 3 — retrieval quality report + ground truth** | `docs/retrieval-validation-results.md`, `docs/proj-lessons-ground-truth.md`  |
+| **Module 3 — eval harness + holdout set** | `eval/harness_deterministic.py`, `docs/holdout-task-ste.md` (HO-* holdout) |
+| **Module 3 — calibration log** | `docs/calibration-log.md` |
+| **Module 4 — governance policy** | `docs/governance-policy.md` |
+| **Module 4 — role-to-tool access matrix** | `docs/appt-routing-and-tool-grant-map.md` |
+| **Module 4 — CI/CD guardrails** | `.github/workflows/`, `scripts/check-pipeline-integrity.py` |
+| **Module 4 — audit log** | `logs/storage-audit-log.jsonl`, `logs/retrieval-audit-log.jsonl`; builder `scripts/build-audit-trail.py` ,`eval/evidence/`|
+| **Module 4 — failure-mode playbook** | `docs/ops-runbook.md` / `docs/failure-mode-playbook.md`  |
+| **Module 4 — agent/deterministic/human matrix** | `docs/step-classification.md` |
+| **Module 4 — deterministic conversion + ADR** | `scripts/run_tests_deterministic.py`, `docs/adr/ADR-001-tester-deterministic-conversion.md` |
+| **ADR package** | `docs/adr/` (ADR-001 … ADR-007) |
+| **Enforcement verification + red-team** | `eval/enforcement-verification.md`, `eval/red-team-prompts.md`, `eval/red-team-results.md`, `scripts/probe.py` |
+| **Production integration (end-to-end run)** | `docs/run-summary.md`, `eval/evidence/run-A-*`, `eval/evidence/run-B-*` |
+| **Impact, right-tool drill, stakeholder one-pager, ops runbook** | `docs/impact-report.md`, `docs/tool-evolution-drill.md`, `docs/stakeholder-one-pager.md`, `docs/ops-runbook.md` |
+
+---
+
+## 8. Governance & boundaries (summary)
+
+- **Container (Layer 1):** workspace mounted read-only for non-writing roles; memory volume
+  omitted unless the role's policy allows it; no outbound network egress; identity set by
+  `AGENT_ROLE`.
+- **MCP allow-lists (Layer 2):** every storage/retrieval operation passes an `_authorize`
+  gate against a per-role allow-list; an ungranted call raises `ToolError` and logs
+  `authorization_denied`. Retrieval enforces a per-role classification ceiling.
+- **CI/CD:** policy test, evaluation gate, and a pipeline-integrity check are required
+  status checks; a weakened gate fails the build.
+- **Right-tool discipline:** stable agentic steps are converted to deterministic code with
+  before/after evidence and an ADR written at decision time.
+
+See `docs/governance-policy.md` and `eval/enforcement-verification.md` for the full policy
+and the reproducible verification (`scripts/probe.py`).
+
+## 9. Sanitization
+
+No secrets, PII, customer data, or internal URLs are committed. `.env` and
+`appointment-backend/test_mysql.py` are gitignored; the OpenRouter key is supplied at
+runtime via `-e` and scoped to a single model. Audit logs under `logs/` are runtime
+artifacts (gitignored); representative evidence is copied into `eval/evidence/`.
+
+## 10. Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `/mcp` shows `storage ✘ / retrieval ✘` | `.mcp.json` must use **stdio** (`"command": "python"`, `"args": ["mcp-servers/<name>/server.py"]`), not an `http` URL — the servers speak stdio. |
+| `authorization_denied` on every call | `AGENT_ROLE` is unset or empty; set it (`-e AGENT_ROLE=orchestrator`). |
+| `ModuleNotFoundError: flask_cors` when running backend tests | Install the app's runtime deps in the container: `pip install -r appointment-backend/requirements.txt` (bake these into the Dockerfile for full reproducibility). |
+| Tester step fails: `unrecognized [mcp__coursetools__test_runner]` | Expected in this environment — the agentic tester's tool isn't present. Run the deterministic step instead: `python scripts/run_tests_deterministic.py …` (this is ADR-001). |
+| Slack / Gmail MCP show `✘` | Optional integrations; not needed for the core pipeline. |
+
+---
+
+Repository: **[https://github.com/Varalakshmi-12/appointment-python-agentic-harness-cicd.git]**
+
+
+<!-- =========================================================
+This README (preserved for reference; not rendered on GitHub)
 # Module 4.2 — LaunchCode Agentic Engineer (CI/CD)
 
 > **Note:** This repository covers **Module 4.2 (CI/CD) only.**
@@ -498,3 +701,4 @@ docker run -it --rm -p 8501:8501 -p 8502:8502 \
   -v "$PWD":/workspace \
   heatonresearch/agentic_engineer_4:latest
 ```
+========================================================= -->

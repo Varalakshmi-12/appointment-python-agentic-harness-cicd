@@ -7,15 +7,15 @@ rejected with evidence, consequences, and open risks.
 - **ADR-001** — Convert the Test step from agent to deterministic code.
   (Full record in `docs/adr/ADR-001-tester-deterministic-conversion.md`; summarized
   at the end of this package.) Status: **Accepted**.
-- **ADR-002** — Quality rubric design.
-- **ADR-003** — Persistent memory layout.
-- **ADR-004** — MCP tool boundaries.
-- **ADR-005** — Subagent scoping and routing.
-- **ADR-006** — Governance policy and two-layer enforcement.
+- **ADR-003** — Quality rubric design.
+- **ADR-004** — Persistent memory layout.
+- **ADR-005** — MCP tool boundaries.
+- **ADR-006** — Subagent scoping and routing.
+- **ADR-007** — Governance policy and two-layer enforcement.
 
 ---
 
-# ADR-002: Multi-dimensional, threshold-gated quality rubric
+# ADR-003: Multi-dimensional, threshold-gated quality rubric
 
 ## Status
 Accepted
@@ -57,7 +57,7 @@ requiring per-task rubrics.
 
 ---
 
-# ADR-003: Persistent memory layout with scoped write
+# ADR-004: Persistent memory layout with scoped write
 
 ## Status
 Accepted
@@ -95,7 +95,7 @@ not fully enforced within a single session (recorded in the calibration log).
 
 ---
 
-# ADR-004: Expose capabilities only through governed MCP tool boundaries
+# ADR-005: Expose capabilities only through governed MCP tool boundaries
 
 ## Status
 Accepted
@@ -136,7 +136,7 @@ enforcement on live runs. Both have named fixes.
 
 ---
 
-# ADR-005: Orchestrated, least-privilege subagent scoping and routing
+# ADR-006: Orchestrated, least-privilege subagent scoping and routing
 
 ## Status
 Accepted
@@ -177,7 +177,7 @@ with each added role.
 
 ---
 
-# ADR-006: Least-privilege governance with two-layer enforcement in code
+# ADR-007: Least-privilege governance with two-layer enforcement in code
 
 ## Status
 Accepted
