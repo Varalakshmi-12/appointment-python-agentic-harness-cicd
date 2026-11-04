@@ -1,17 +1,27 @@
 # ADR Package
 
+**Author:** Varalakshmi
+
 Architecture Decision Records for the governed multi-agent engineering pipeline
 (appointment-app). Each record captures one durable decision, the alternatives
 rejected with evidence, consequences, and open risks.
 
 - **ADR-001** — Convert the Test step from agent to deterministic code.
   (Full record in `docs/adr/ADR-001-tester-deterministic-conversion.md`; summarized
-  at the end of this package.) Status: **Accepted**.
+  at the end of this package.) Status: **Accepted** — implemented and measured.
+- **ADR-002** — Convert the backend import/compile check from agent to deterministic
+  code. (Full record in `docs/adr/ADR-002-import-check-deterministic-conversion.md`;
+  summarized at the end.) Status: **Proposed** — a right-tool readiness analysis;
+  not yet implemented, so no after-numbers are claimed.
 - **ADR-003** — Quality rubric design.
 - **ADR-004** — Persistent memory layout.
 - **ADR-005** — MCP tool boundaries.
 - **ADR-006** — Subagent scoping and routing.
 - **ADR-007** — Governance policy and two-layer enforcement.
+
+> Two conversions are recorded at different maturity: **ADR-001** is an *implemented,
+> measured* agent-to-deterministic conversion (the required one); **ADR-002** is a
+> *proposed* conversion documented at decision time, before any code exists.
 
 ---
 
@@ -209,7 +219,7 @@ Enforceable, auditable, self-protecting governance (even an attempt to weaken a 
 caught by the Pipeline Integrity Check and blocked). Cost: governance overhead — each
 agentic step needs a policy entry, an allow-list, audit coverage, and an eval slot,
 which is itself a standing reason to convert stable steps to deterministic code
-(see ADR-001).
+(see ADR-001 and ADR-002).
 
 ## Evidence
 `docs/governance-policy.md`; the CI governed pipeline and Pipeline Integrity Check
@@ -224,7 +234,7 @@ audit-based enforcement on live runs until the storage server requires a valid c
 # ADR-001 (summary — full record in docs/adr/)
 
 ## Status
-Accepted
+Accepted — implemented and measured
 
 ## Decision
 Convert the `appt-tester` step from an agent to `scripts/run_tests_deterministic.py`,
@@ -247,3 +257,36 @@ commit; ADR accepted after an end-to-end regression (11/11 local + CI green).
 ## Open risks
 If the test-pass/fail rule ever needs judgment (e.g. tolerating known-flaky tests),
 the step may need enrichment in code before any return to an agent.
+
+---
+
+# ADR-002 (summary — full record in docs/adr/)
+
+## Status
+Proposed — readiness analysis, not yet implemented
+
+## Decision
+Replace the backend import/compile-check agent (`appt-import-checker`) with a
+deterministic script that compiles every backend file, imports the app module, reports
+per-file pass/fail, and classifies the app module's runnability separately from
+incidental import failures in standalone/test scripts.
+
+## Why (evidence-backed)
+Iteration Log Run 001 Task B shows an agent performing a fully specified procedure
+(`py_compile` + import) at 16/16 quality but $0.26/run and 8 minutes of review — model
+cost and latency for a mechanical check. The one judgment it applied (treating
+`test_sms.py`'s live-Twilio-at-import failure as non-blocking for backend runnability)
+is itself expressible as an explicit rule. Rejected alternatives: keep it fully agentic
+(pays for a specified procedure); a naive "any import fails → not runnable" check
+(would wrongly report the backend broken on every run). The record stays Proposed
+because no replacement has been built or measured — inventing after-numbers would
+defeat the purpose.
+
+## Consequences (expected)
+Near-zero cost, seconds not minutes, byte-identical verdict, structured audit output;
+cost is an exclusion rule for incidental import failures that must be kept correct as
+the test suite grows.
+
+## Open risks
+The exclusion rule could hide a real import regression in a test file; the "incidental"
+set needs periodic review.
