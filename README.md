@@ -196,7 +196,7 @@ artifacts (gitignored); representative evidence is copied into `eval/evidence/`.
 
 ---
 
-Repository: **[https://github.com/Varalakshmi-12/appointment-python-agentic-harness-cicd.git]**
+Repository: **[https://github.com/Varalakshmi-12/appointment-python-agentic-harness-cicd]**
 
 
 <!-- =========================================================
