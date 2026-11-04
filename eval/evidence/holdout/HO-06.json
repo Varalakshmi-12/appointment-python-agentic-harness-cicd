@@ -1,0 +1,35 @@
+{
+  "_note": "REAL HO-06 holdout run on the calibrated system (grant fix in place). Task: terminal-state finality on PATCH /appointments/<id>/status. Orchestrator found the guard already existed (decision-007), closed as already-fixed with added regression coverage; the implementer recorded a follow-up lesson. duration_seconds/token_cost are estimates — interactive Claude Code runs are not auto-timed (instrumentation gap).",
+  "task_id": "HO-06",
+  "expected_path": ["planner", "implementer"],
+  "duration_seconds": 900,
+  "token_cost": 30000,
+  "events": [
+    {
+      "type": "subagent",
+      "step": 1,
+      "role": "planner",
+      "handoff": "Issue: transitions out of terminal states allegedly allowed on PATCH /appointments/<id>/status.",
+      "output_document": {
+        "summary": "Investigated the reported terminal-state bug. Verified STATUS_TRANSITIONS has empty sets for completed/cancelled/no-show, so the guard already rejects outbound transitions with 409 (decision-007). No behavioral bug; recommended closing as already-fixed and adding regression coverage.",
+        "citation_list": ["lesson-appointment-status-state-machine.md"]
+      }
+    },
+    {
+      "type": "subagent",
+      "step": 2,
+      "role": "implementer",
+      "handoff": "Close as already-fixed: add regression tests for terminal-state transitions and a clarifying comment; record the lesson learned.",
+      "output_document": {
+        "summary": "Added 7 regression tests locking in the terminal-state 409s and idempotent no-ops, plus a clarifying comment above STATUS_TRANSITIONS. Recorded a follow-up lesson referencing the existing entry without duplicating it. Wrote only; did not read/list/delete storage.",
+        "citation_list": ["lesson-appointment-status-state-machine.md"]
+      }
+    },
+    {
+      "type": "tool_call",
+      "role": "implementer",
+      "tool": "write_entry",
+      "args": {"project_id": "proj-lessons", "entry_type": "lesson", "classification": "internal", "title": "lesson-appointment-status-state-machine-2026-09-30-followup"}
+    }
+  ]
+}

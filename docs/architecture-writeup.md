@@ -1,7 +1,7 @@
 # Architecture Write-Up
 ## Governed Multi-Agent Engineering Pipeline for an Appointment-Scheduling App
 
-**Author:** Chetan
+**Author:** Varalakshmi
 **Date:** 2026-10-30
 **Delivery path:** Job-seeker / no-deployment (representative engineering workflow)
 **Target codebase:** appointment-scheduling app (Flask + MySQL backend, React frontend)

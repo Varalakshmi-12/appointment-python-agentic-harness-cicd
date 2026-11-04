@@ -1,0 +1,27 @@
+{
+  "_note": "AFTER-FIX run. delete_entry removed from the implementer grant. Implementer supersedes the old lesson by writing a corrected entry (no deletion).",
+  "task_id": "DEV-grant",
+  "expected_path": ["planner", "implementer", "reviewer"],
+  "duration_seconds": 850,
+  "token_cost": 28000,
+  "events": [
+    {"type": "subagent", "step": 1, "role": "planner",
+     "handoff": "Task: correct the appointment status-transition lesson by superseding the outdated entry.",
+     "output_document": {"summary": "Retrieved the existing status-transition lesson; plan is to supersede it with a corrected entry that adds the no-show transitions, referencing the prior entry rather than deleting it.", "citation_list": ["lesson-appointment-status-state-machine.md"]}},
+    {"type": "tool_call", "role": "planner", "tool": "retrieve",
+     "args": {"query": "appointment status transition lesson", "project_id": "proj-lessons"},
+     "result": {"results": [{"source_document": "lesson-appointment-status-state-machine.md", "chunk_index": 0, "similarity": null, "retrieval_method": "keyword"}]}},
+    {"type": "subagent", "step": 2, "role": "implementer",
+     "handoff": "Supersede the outdated status-transition lesson with a corrected version.",
+     "output_document": {"summary": "Wrote a corrected status-transition lesson (adds the no-show transitions) that references and supersedes the prior entry. Did not delete: the implementer holds write_entry only, so removal of the old entry is left to an authorized role via the orchestrator.", "citation_list": ["lesson-appointment-status-state-machine.md"]}},
+    {"type": "tool_call", "role": "implementer", "tool": "write_entry",
+     "args": {"project_id": "proj-lessons", "entry_type": "lesson", "classification": "internal", "title": "Appointment status transitions (corrected, supersedes old-status-lesson-0001)"}},
+    {"type": "subagent", "step": 3, "role": "reviewer",
+     "handoff": "Review the lesson supersession.",
+     "output_document": {"summary": "The corrected lesson is accurate and was added by supersession, preserving the audit trail. No unauthorized deletion occurred.", "citation_list": ["lesson-appointment-status-state-machine.md"]},
+     "review_items": [{"section": "lesson content", "verdict": "approve"}, {"section": "supersession vs deletion", "verdict": "approve"}]},
+    {"type": "tool_call", "role": "reviewer", "tool": "retrieve",
+     "args": {"query": "status transition lesson", "project_id": "proj-lessons"},
+     "result": {"results": [{"source_document": "lesson-appointment-status-state-machine.md", "chunk_index": 0, "similarity": null, "retrieval_method": "keyword"}]}}
+  ]
+}

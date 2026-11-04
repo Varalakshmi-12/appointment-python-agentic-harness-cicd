@@ -1,0 +1,79 @@
+{
+  "_note": "Reconstructed from the Lesson 2 status-validation run for harness bring-up. Development run, not a holdout run.",
+  "task_id": "DEV-appt-status",
+  "expected_path": ["planner", "implementer", "reviewer"],
+  "duration_seconds": 1740,
+  "token_cost": 42000,
+  "events": [
+    {
+      "type": "subagent",
+      "step": 1,
+      "role": "planner",
+      "handoff": "Task: add server-side validation of appointment status transitions on PATCH /appointments/<id>/status.",
+      "output_document": {
+        "summary": "Plan: define the allowed states (scheduled, confirmed, completed, cancelled, no-show) and a transition table; add a value-check gate (400) and a transition-table gate (409) ahead of the UPDATE. Governance guard requires logging decision-007 first.",
+        "citation_list": [
+          "lesson-appointment-status-state-machine.md",
+          "lesson-standardize-route-error-handling.md"
+        ]
+      }
+    },
+    {
+      "type": "tool_call",
+      "role": "planner",
+      "tool": "retrieve",
+      "args": {"query": "how should appointment status changes be validated", "project_id": "proj-lessons"},
+      "result": {"results": [
+        {"source_document": "lesson-appointment-status-state-machine.md", "chunk_index": 0, "similarity": null, "retrieval_method": "keyword"}
+      ]}
+    },
+    {
+      "type": "tool_call",
+      "role": "planner",
+      "tool": "retrieve",
+      "args": {"query": "how to handle failures returned by appointment API routes", "project_id": "proj-lessons"},
+      "result": {"results": [
+        {"source_document": "lesson-standardize-route-error-handling.md", "chunk_index": 0, "similarity": null, "retrieval_method": "keyword"}
+      ]}
+    },
+    {
+      "type": "subagent",
+      "step": 2,
+      "role": "implementer",
+      "handoff": "Plan + files to change: app.py update_appointment_status. Record one lesson learned.",
+      "output_document": {
+        "summary": "Edited appointment-backend/app.py: widened VALID_STATUSES to 5 states, added STATUS_TRANSITIONS, same-status no-op (200) and illegal-transition (409) gates ahead of the UPDATE. Recorded one lesson learned via write_entry.",
+        "citation_list": ["lesson-appointment-status-state-machine.md"]
+      }
+    },
+    {
+      "type": "tool_call",
+      "role": "implementer",
+      "tool": "write_entry",
+      "args": {"project_id": "proj-lessons", "entry_type": "lesson", "classification": "internal", "title": "Order of gates matters when adding a transition check on top of an existing value check"}
+    },
+    {
+      "type": "subagent",
+      "step": 3,
+      "role": "reviewer",
+      "handoff": "Review the change to app.py update_appointment_status.",
+      "output_document": {
+        "summary": "Confirmed parameterized SQL and correct gate ordering. Found a KeyError risk: STATUS_TRANSITIONS[row['status']] can raise on an unconstrained VARCHAR status; recommended .get(row['status'], set()).",
+        "citation_list": ["lesson-mysql-cursor-and-connection-leaks.md"]
+      },
+      "review_items": [
+        {"section": "gate ordering", "verdict": "approve"},
+        {"section": "unconstrained status KeyError", "verdict": "reject"}
+      ]
+    },
+    {
+      "type": "tool_call",
+      "role": "reviewer",
+      "tool": "retrieve",
+      "args": {"query": "mysql cursor connection handling", "project_id": "proj-lessons"},
+      "result": {"results": [
+        {"source_document": "lesson-mysql-cursor-and-connection-leaks.md", "chunk_index": 0, "similarity": null, "retrieval_method": "keyword"}
+      ]}
+    }
+  ]
+}

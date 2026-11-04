@@ -136,7 +136,7 @@ Every required artifact and where to find it.
 | **Containerized harness** (fs/network/credential boundaries) | `Dockerfile`, `docker-entrypoint.sh`, `scripts/run-agent.sh`, `scripts/run-agent.ps1` |
 | **Module 1 — PRD** | `docs/lint-prd.md` `docs/import-check-prd.md`|
 | **Module 1 — quality rubric + thresholds** | `docs/import-check-rubric.md`,`docs/lint-rubric.md``eval/rubric.json`, `eval/harness_rubric_suite.py` |
-| **Module 1 — baseline + iteration log** | `docs/appt-iteration-log.md` |
+| **Module 1 — baseline + iteration log** | `docs/iteration-log.md` |
 | **Module 2 — agent definitions** | `agents/appt-orchestrator.md`, `appt-implementer.md`, `appt-security-reviewer.md`, `appt-import-checker.md` |
 | **Module 2 — skills (≥2)** | `skills/`  |
 | **Module 2 — memory layout + notes** | `.memory/`, `docs/memory-architecture.md` |
