@@ -1,7 +1,7 @@
 {
   "project_manager": [],
   "planner": ["retrieve"],
-  "implementer": ["write_entry"],
+  "implementer": ["write_entry", "delete_entry"],
   "reviewer": ["retrieve"],
   "quality_reviewer": ["retrieve"]
 }

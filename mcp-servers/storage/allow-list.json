@@ -24,7 +24,8 @@
     "orchestrator"
   ],
   "delete_entry": [
-    "orchestrator"
+    "orchestrator",
+    "implementer"
   ],
   "audit_read": [
     "orchestrator"
