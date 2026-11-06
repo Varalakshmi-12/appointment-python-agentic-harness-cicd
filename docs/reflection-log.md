@@ -9,7 +9,7 @@ pruned stale entry with its reason.
 
 ---
 
-## Entry 1 — Over-broad tool grant (2026-09-29)
+## Entry 1 — Over-broad tool grant (2026-11-06)
 
 - **Trigger (eval evidence):** the `forbidden_operations` deterministic check failed —
   the Implementer performed `delete_entry`, which contradicts its write-only charter.
@@ -71,7 +71,7 @@ pruned stale entry with its reason.
 
 - **Pruned:** the outdated appointment status-transition lesson from the project knowledge
   layer (`proj-lessons`).
-- **Date:** 2026-09-29.
+- **Date:** 2026-11-06.
 - **Reason (written):** superseded. During the status-transition work the old entry's
   transition table no longer matched the authoritative rule in `decision-007`; it was
   deleted and replaced with the corrected `appointment-status-state-machine` lesson. Keeping
@@ -86,6 +86,6 @@ pruned stale entry with its reason.
 ## How this maps to the self-improving loop
 
 Each entry is a full **run → review → fix → rerun** cycle driven by a specific eval result or
-observed failure, across multiple sessions (2026-09-24 → 2026-11-02) — visible in the commit
+observed failure, across multiple sessions (2026-09-24 → 2026-11-06) — visible in the commit
 history and `docs/calibration-log.md`. Before/after scores show the change held (or, for the
 open item, honestly mark it pending).

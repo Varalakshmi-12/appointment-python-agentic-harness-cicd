@@ -247,3 +247,6 @@ appointment-backend/test_mysql.py
 appointment-frontend/node_modules/
 appointment-frontend/dist/
 appointment-frontend/build/
+
+# keep evaluation evidence logs tracked despite the global *.log ignore
+!eval/evidence/**/*.log
