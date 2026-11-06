@@ -1,95 +1,117 @@
-#!/usr/bin/env python3
-"""Sample retrieval MCP server with role and classification enforcement."""
+"""
+Retrieval MCP server (stdio).
 
-import datetime
+Thin transport wrapper. All ranking lives in retrieval_index.py (real TF-IDF
+vector search + FTS5 keyword fallback over the lessons corpus) and all
+governance in governance.py (per-role classification ceiling, withheld-audit,
+citation shaping). This file only exposes the `retrieve` tool over stdio and
+passes the caller's role through.
+
+The replaced placeholder
+------------------------
+The earlier version of this server ranked with a word-count stub
+(`score = sum(1 for term in query_terms if term in text)`) over three dummy
+docs and carried a `# Replace with sqlite-vec / embedding search` TODO. That
+stub is gone: ranking is now cosine similarity over a TF-IDF index built from
+the eight real lesson files, verified by retrieval_eval.py (precision@1 = 6/6).
+
+An embedding model was the first choice; its download is blocked by the
+environment proxy (HuggingFace 403), so the ranker is TF-IDF, which is fully
+offline and deterministic.
+
+MCP API note
+------------
+Written for mcp >= 2.x, which registers handlers through the Server
+constructor (on_list_tools / on_call_tool) rather than the older
+@app.list_tools() decorators.
+
+Prepared by: Varalakshmi
+"""
+
+from __future__ import annotations
+
 import json
 import os
-from pathlib import Path
-from typing import Any
 
-try:
-    from fastmcp import FastMCP
-    from fastmcp.exceptions import ToolError
-except Exception:  # pragma: no cover
-    class ToolError(Exception):
-        pass
-    class FastMCP:
-        def __init__(self, name: str):
-            self.name = name
-        def tool(self, func=None):
-            def decorate(fn):
-                return fn
-            return decorate(func) if func else decorate
-        def run(self):
-            print(f"FastMCP not installed; {self.name} functions are importable only.")
+import mcp.types as types
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
 
-mcp = FastMCP("retrieval")
-CALLING_ROLE = os.environ.get("AGENT_ROLE", "")
-ALLOW_LIST_PATH = Path(__file__).parent / "allow-list.json"
-ALLOW_LIST = json.loads(ALLOW_LIST_PATH.read_text(encoding="utf-8"))
-AUDIT_LOG_PATH = Path(os.environ.get("RETRIEVAL_AUDIT_LOG", "logs/retrieval-audit-log.jsonl"))
-AUDIT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-CORPUS_PATH = Path(__file__).parent / "corpus.json"
-CLASSIFICATION_ORDER = ["public", "internal", "confidential"]
+from governance import retrieve_with_governance
+from retrieval_index import RetrievalIndex
 
+AUDIT_PATH = os.environ.get(
+    "RETRIEVAL_AUDIT_LOG",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs", "retrieval-audit.log"),
+)
 
-def _record_audit(event: str, operation: str, detail: str) -> dict[str, Any]:
-    record = {
-        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "event": event,
-        "operation": operation,
-        "role": CALLING_ROLE,
-        "outcome": event,
-        "detail": detail,
-        "policy_reference": "docs/governance-policy.md",
-    }
-    with open(AUDIT_LOG_PATH, "a", encoding="utf-8") as log:
-        log.write(json.dumps(record) + "\n")
-    return record
+_INDEX = RetrievalIndex()  # built once at start-up
+
+_RETRIEVE_TOOL = types.Tool(
+    name="retrieve",
+    description=(
+        "Search the lessons corpus for prior-incident knowledge. "
+        "Returns ranked citations (source_document, chunk_index, similarity, "
+        "retrieval_method, classification). Enforces the caller's classification "
+        "ceiling; documents above it are withheld and audited."
+    ),
+    inputSchema={
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Natural-language query."},
+            "calling_role": {
+                "type": "string",
+                "description": "The agent role making the call (ceiling enforced per role).",
+            },
+            "limit": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
+        },
+        "required": ["query", "calling_role"],
+    },
+)
 
 
-def _retrieval_ceiling() -> str:
-    rule = ALLOW_LIST.get("retrieve", {}).get(CALLING_ROLE)
-    if not rule or not rule.get("granted"):
-        reason = (rule or {}).get("denial_reason", "role is not granted retrieval")
-        _record_audit("authorization_denied", "retrieve", reason)
-        raise ToolError(f"authorization_denied: {reason}. See docs/governance-policy.md.")
-    return str(rule["classification_ceiling"])
+async def on_list_tools(ctx, params) -> types.ListToolsResult:
+    return types.ListToolsResult(tools=[_RETRIEVE_TOOL])
 
 
-def _vector_search(query: str, top_k: int) -> list[dict[str, Any]]:
-    # Sample lexical search. Replace with sqlite-vec / embedding search from Module 4.
-    docs = json.loads(CORPUS_PATH.read_text(encoding="utf-8"))
-    query_terms = set(query.lower().split())
-    scored = []
-    for doc in docs:
-        text = f"{doc.get('title', '')} {doc.get('text', '')}".lower()
-        score = sum(1 for term in query_terms if term in text)
-        scored.append((score, doc))
-    scored.sort(key=lambda item: item[0], reverse=True)
-    return [doc for score, doc in scored[:top_k] if score > 0] or [doc for _, doc in scored[:top_k]]
-
-
-@mcp.tool
-def retrieve(query: str, top_k: int = 5) -> list:
-    ceiling = _retrieval_ceiling()
-    max_level = CLASSIFICATION_ORDER.index(ceiling)
-    candidates = _vector_search(query, top_k)
-    visible = []
-    withheld = 0
-    for doc in candidates:
-        if CLASSIFICATION_ORDER.index(doc["classification"]) <= max_level:
-            visible.append(doc)
-        else:
-            withheld += 1
-    if withheld:
-        _record_audit(
-            "classification_withheld",
-            "retrieve",
-            f"{withheld} result(s) above the '{ceiling}' ceiling were withheld",
+# ---- RETRIEVE HANDLER: the only logic a pre-existing server needs ----------
+async def on_call_tool(ctx, params) -> types.CallToolResult:
+    if params.name != "retrieve":
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"unknown tool: {params.name}")],
+            is_error=True,
         )
-    return visible
+
+    arguments = params.arguments or {}
+    query = arguments["query"]
+    calling_role = arguments["calling_role"]
+    limit = int(arguments.get("limit", 5))
+
+    try:
+        citations = retrieve_with_governance(
+            _INDEX, query, calling_role, AUDIT_PATH, limit=limit
+        )
+    except PermissionError as exc:
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=str(exc))],
+            is_error=True,
+        )
+
+    payload = {"query": query, "calling_role": calling_role, "citations": citations}
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=json.dumps(payload, indent=2))]
+    )
+
+
+app = Server("retrieval", on_list_tools=on_list_tools, on_call_tool=on_call_tool)
+
+
+async def _main() -> None:
+    async with stdio_server() as (read_stream, write_stream):
+        await app.run(read_stream, write_stream, app.create_initialization_options())
 
 
 if __name__ == "__main__":
-    mcp.run()
+    import asyncio
+
+    asyncio.run(_main())

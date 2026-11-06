@@ -1,20 +1,82 @@
 [
   {
-    "id": "public-readme",
-    "title": "Public README",
-    "classification": "public",
-    "text": "Public setup notes and general onboarding."
-  },
-  {
-    "id": "internal-architecture",
-    "title": "Internal architecture notes",
+    "doc_id": "lesson-appointment-status-state-machine",
+    "title": "Appointment status must be a validated state machine, not a free-text field",
+    "project": "proj-lessons",
     "classification": "internal",
-    "text": "Internal routing and implementation context."
+    "tags": "[appointments, status, state-machine, patch, validation]",
+    "source": "appointment-python",
+    "last_updated": "2026-09-19",
+    "body": "## What happened\nA `PATCH /appointments/<id>/status` route was added to let staff move an\nappointment through its lifecycle. As first written it accepted any string and\nwrote it straight to the row. That allowed illegal jumps (a `cancelled`\nappointment being set back to `confirmed`) and typos (`complete` vs\n`completed`) that silently corrupted reporting.\n\n## What was learned\nStatus is a state machine with a small fixed set of values and a fixed set of\nlegal transitions. Treating it as a free-text column pushes validation onto\nevery caller and guarantees inconsistent data over time. The allowed values and\nthe allowed transitions belong in one place on the server.\n\n## How to apply it\nDefine the states explicitly (scheduled, confirmed, completed, cancelled,\nno-show) and a transition table of which moves are legal. Reject any value\noutside the set with a 4xx, and reject any legal-value-but-illegal-transition\nwith a distinct error so the caller understands why. Never let the status route\naccept an arbitrary string."
   },
   {
-    "id": "confidential-design-spec",
-    "title": "Design specification",
+    "doc_id": "lesson-cors-config-for-react-frontend",
+    "title": "React frontend was blocked by missing CORS configuration",
+    "project": "proj-lessons",
+    "classification": "internal",
+    "tags": "[cors, flask, react, frontend, configuration]",
+    "source": "appointment-python",
+    "last_updated": "2026-09-19",
+    "body": "## What happened\nThe React frontend, served from its own dev origin, could not call the Flask\nAPI: requests failed in the browser with a CORS error while the same endpoints\nworked fine from curl. Time was lost treating it as a backend bug when the API\nwas responding correctly; the browser was refusing the cross-origin response\nbecause no allowed origin was configured.\n\n## What was learned\nA CORS failure is a browser-enforced policy, not a server error — the endpoint\nis working, the browser just won't hand the response to JavaScript from a\ndisallowed origin. Testing an API only with curl hides this entirely, because\ncurl does not enforce CORS. The frontend origin must be explicitly permitted.\n\n## How to apply it\nConfigure allowed origins explicitly for each environment (dev, staging, prod)\nrather than allowing all origins, which is a security risk in production. When a\nrequest works from curl but fails from the browser, suspect CORS first and check\nthe configured origins before debugging the route."
+  },
+  {
+    "doc_id": "lesson-mysql-cursor-and-connection-leaks",
+    "title": "Unclosed MySQL cursors exhausted connections under light load",
+    "project": "proj-lessons",
+    "classification": "internal",
+    "tags": "[mysql, database, connections, cursors, resource-leak]",
+    "source": "appointment-python",
+    "last_updated": "2026-09-19",
+    "body": "## What happened\nSeveral data-access paths opened a MySQL connection and cursor but did not\nreliably close them when a route raised part-way through. Under normal manual\ntesting everything worked, but as routes were exercised repeatedly the app\nbegan to fail with \"too many connections\" — a failure that only appeared after\nenough requests, so it looked intermittent and was hard to reproduce.\n\n## What was learned\nA resource leak does not fail on the first request; it fails after the pool is\nexhausted, which makes it look random and unrelated to the code that caused it.\nManual \"it worked once\" testing cannot catch this class of bug. Connections and\ncursors must be released on every path, including the error path.\n\n## How to apply it\nAcquire the connection and cursor with context managers (`with`) so they close\neven when an exception is raised, or use a connection pool with explicit\nreturn-to-pool in a `finally`. When reviewing data-access code, check the error\npath specifically: the happy path usually closes fine; the leak is on the\nbranch that raised."
+  },
+  {
+    "doc_id": "lesson-notification-cost-and-vendor-budget",
+    "title": "Patient-notification vendor costs and monthly budget ceiling",
+    "project": "proj-lessons",
     "classification": "confidential",
-    "text": "Confidential design specification with sensitive details."
+    "tags": "[notifications, cost, budget, twilio, vendor, sms, email]",
+    "source": "appointment-python",
+    "last_updated": "2026-09-19",
+    "body": "## What happened\nWhen scoping the SMS + email reminder feature, we priced the vendor spend and\nset an internal budget ceiling so notification volume could not run away. These\nfigures come from the vendor contract and internal finance guidance and are not\nfor general distribution — they reveal negotiated rates and internal spend\nlimits.\n\n## What was learned\nCost ceilings have to be enforced in the sending path, not just agreed in a\nplanning doc, or a retry loop or a burst of appointments can blow the budget\nbefore anyone notices. The rate and cap are also commercially sensitive: they\ndisclose what we negotiated and how much headroom we have.\n\n## How to apply it\nEnforce a per-day and per-month send cap in code, alert before the cap, and keep\nthe specific negotiated rates and the monthly ceiling out of code comments,\nlogs, and any artifact that ships with the repo. Treat these numbers as\nconfidential: they belong only where finance and leadership can see them, which\nis why this lesson is classified confidential and must not surface to\ninternal-ceiling roles."
+  },
+  {
+    "doc_id": "lesson-sms-notifications-were-never-wired",
+    "title": "SMS reminders looked implemented but never reached patients",
+    "project": "proj-lessons",
+    "classification": "internal",
+    "tags": "[notifications, twilio, sms, integration, silent-failure]",
+    "source": "appointment-python",
+    "last_updated": "2026-09-19",
+    "body": "## What happened\nThe backend exposed a `send_sms()` function and appointment routes called it,\nso by every code-reading signal SMS reminders were \"done.\" In reality the\nTwilio client was never configured: `send_sms()` returned without error, no\ncredentials were loaded, and no message was ever delivered. Because the call\nsite swallowed the result, the whole path failed silently — patients simply\nnever got a text, and nothing in the logs said so.\n\n## What was learned\nThe presence of an integration function is not evidence the integration works.\nA stub that returns cleanly is worse than one that raises, because it produces a\ngreen path with no delivered effect. External side effects (SMS, email,\npayments) must be verified against the external system, not against the fact\nthat our code ran without an exception.\n\n## How to apply it\nWhen wiring or reviewing any external-notification path, confirm three things\nbefore calling it done: credentials are actually loaded (fail loudly if not),\nthe vendor call returns a real message ID, and there is an end-to-end test that\nobserves delivery (or a sandbox receipt). Never let a notification helper return\nsuccess without either sending or explicitly reporting that it did nothing."
+  },
+  {
+    "doc_id": "lesson-standardize-route-error-handling",
+    "title": "Routes leaked raw exceptions instead of a consistent error response",
+    "project": "proj-lessons",
+    "classification": "internal",
+    "tags": "[error-handling, flask, api, http-status, decision-004]",
+    "source": "appointment-python",
+    "last_updated": "2026-09-19",
+    "body": "## What happened\nSix appointment routes handled failure inconsistently. Some let a database or\nvalidation exception bubble up into a bare Flask 500 with a stack trace in the\nbody; others returned ad-hoc JSON with different shapes. A client could not\ntell a client error (bad input) from a server error, and stack traces exposed\ninternal details. This was tracked and fixed as decision-004.\n\n## What was learned\nError handling is part of the API contract, not an afterthought per route. When\neach route invents its own failure shape, the frontend has to special-case each\none, and real bugs hide behind generic 500s. A single error envelope with a\nstable shape (code, message, and appropriate HTTP status) makes failures\ndiagnosable and keeps internal details out of responses.\n\n## How to apply it\nWrap route logic so that validation problems return 4xx with a machine-readable\nerror code and a safe message, and unexpected failures return 5xx with the\ndetail logged server-side but not returned to the client. Apply the same\nenvelope to every route; do not hand-fix one route's output. Add a new route to\nthe shared handler rather than writing bespoke try/except each time."
+  },
+  {
+    "doc_id": "lesson-store-appointment-times-in-utc",
+    "title": "Appointment times stored in server-local time displayed wrong to patients",
+    "project": "proj-lessons",
+    "classification": "internal",
+    "tags": "[timezone, datetime, utc, appointments, display-bug]",
+    "source": "appointment-python",
+    "last_updated": "2026-09-19",
+    "body": "## What happened\nAppointment datetimes were saved using the server's local time and rendered to\npatients without any timezone context. When the app ran in a different timezone\nfrom the clinic (or after a daylight-saving shift), the time shown to a patient\nwas off by hours, producing missed and mistimed appointments that looked like\nuser error rather than a data bug.\n\n## What was learned\n\"Naive\" datetimes — timestamps with no timezone attached — are ambiguous the\nmoment they cross a boundary between server, database, and browser. The bug is\ninvisible when everything runs in one timezone and only appears once the\nenvironment differs, which makes it easy to ship and hard to trace.\n\n## How to apply it\nStore all appointment times in UTC in the database, attach the timezone\nexplicitly, and convert to the clinic's or patient's local timezone only at the\ndisplay layer. Never persist a local time without its zone. When reviewing\nscheduling code, confirm the write is UTC and the conversion happens once, at\nrender time."
+  },
+  {
+    "doc_id": "lesson-validate-input-at-the-route-boundary",
+    "title": "CRUD routes trusted the request body and accepted unintended fields",
+    "project": "proj-lessons",
+    "classification": "internal",
+    "tags": "[security, validation, mass-assignment, crud, review]",
+    "source": "appointment-python",
+    "last_updated": "2026-09-19",
+    "body": "## What happened\nThe security review of the appointment CRUD routes found that create and update\nhandlers passed the incoming JSON body more or less directly into the database\nwrite. Required fields were not checked, and extra fields in the body were not\nrejected, so a caller could set columns the route never intended to expose\n(a mass-assignment risk) and could omit fields the row needed.\n\n## What was learned\nThe request body is attacker-controlled input, not a trusted object. Accepting\nwhatever the client sends couples the API to the table shape and lets a caller\nwrite fields outside the route's purpose. Validation is a boundary\nresponsibility: it belongs at the edge of the system, before anything reaches\nthe database.\n\n## How to apply it\nFor each write route, define an explicit allow-list of accepted fields and\nrequired fields, reject unknown fields, and coerce/validate types before the\nwrite. Do not spread the raw body into the insert or update. Treat \"which\nfields can this route set\" as part of the route's contract, enforced in code."
   }
 ]
