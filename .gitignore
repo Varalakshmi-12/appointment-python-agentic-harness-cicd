@@ -226,7 +226,7 @@ __marimo__/
 
 
 # --- Agentic harness: commit only the reference corpus from .memory ---
-.memory/*
+
 !.memory/reference/
 !.memory/reference/**
 
