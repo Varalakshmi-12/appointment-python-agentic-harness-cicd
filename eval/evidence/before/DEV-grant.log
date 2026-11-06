@@ -1,2 +1,2 @@
 {"timestamp": "2026-11-06T05:10:11.100000+00:00", "operation": "delete_entry", "project_id": "proj-lessons", "entry_id": "old-status-lesson-0001", "classification": "internal", "calling_role": "implementer"}
-{"timestamp": "2026-11-06T05:10:14.300000+00:00", "operation": "write_entry", "project_id": "proj-lessons", "entry_id": "new-status-lesson-0002", "classification": "internal", "calling_role": "implementer"}
+{"timestamp": "2026-11-06T05:10:14.300000+00:00", "operation": "write_entry", "project_id": "proj-lessons", "entry_id": "corrected-status-lesson-0002", "classification": "internal", "calling_role": "implementer"}
