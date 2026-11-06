@@ -27,7 +27,7 @@ measurement.
 - **Fix applied:** Removed `delete_entry` from the Implementer in
   `docs/routing-and-tool-grant-map.json` (back to `["write_entry"]`) and from the
   `tools:` line of `.claude/agents/appt-implementer.md`.
-  Induce commit: db0ebab. Fix commit: 9b5a4c5.
+  Induce commit: b564f82. Fix commit: c26bdaf.
 - **After:** PASS. `forbidden_operations` passes (no deletion), `tool_grants`
   passes (Implementer used only `write_entry`), `audit_matches_writes` passes
   (1 write == 1 audit entry). Correct behavior is write-only supersession.
