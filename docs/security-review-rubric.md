@@ -38,3 +38,15 @@ Whether the agent stayed read-only and in format. High: no files modified, repor
 
 ## Pass Threshold
 Pass = 3 or higher on every dimension. A security review that fabricates findings (low Finding Accuracy) or misclassifies severity is worse than useless, so a dimension floor applies.
+
+Threshold → Business Outcomes
+
+A security review's value is risk avoided and a manual security sign-off removed: when the review is trustworthy, a change can merge without a separate human security pass, yet a real vulnerability still gets stopped. The thresholds decide when that trust holds.
+
+Route Coverage (3+): Every route handler is reviewed, so no endpoint ships unexamined — an unchecked route can't quietly harbor an undetected vulnerability.
+Finding Accuracy (3+): Findings are real and correctly located, so engineers don't burn time chasing false positives — and the gate stays trusted (a noisy, false-positive gate gets ignored, which is how real issues slip through).
+Severity Classification (3+): Criticals aren't mislabeled as Suggestions, so the gate blocks what should block — a genuine high-risk flaw can't merge disguised as a nitpick.
+Actionability (3+): Each finding carries a concrete fix, so remediation is immediate rather than a research task — keeps cycle time down.
+Scope Compliance (3+): The reviewer stays read-only and in-format, so it can't itself alter code (a governance guarantee) and its report is parseable for gating.
+
+Gate outcome: 3+ on all five, and no unresolved Critical/High → the change merges without a separate human security sign-off → removes that review bottleneck while keeping the risk bar, so a shipped vulnerability (and its incident/breach cost) is avoided. Below the floor, or any open Critical, keeps a human in the loop.

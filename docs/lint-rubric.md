@@ -86,6 +86,19 @@ A run is passing if it scores 3 or higher on all dimensions.
 
 Reasoning: For a lint-review workflow to be trustworthy, the agent must actually run the linter, report real findings completely, organize them usefully, and give a sound recommendation. A weakness in any one of these makes the summary misleading or unactionable, so a dimension floor is appropriate.
 
+
+Threshold → Business Outcomes
+
+The pass floor is tied to the Module 1 baseline: each change cost ~8 minutes of human review and ~$0.23 in tokens at 16/16 quality. The thresholds decide when a run is trustworthy enough to remove that review burden — a dimension below its floor means a human must still review, so the saving is not claimed.
+
+Lint Execution Accuracy (3+): Results are real, so the reviewer trusts the output without re-running flake8 — the ~8-min review is safely skipped. A fabricated-but-confident result (score 1) would drive a wrong merge decision and the rework / defect-escape cost that follows.
+Finding Coverage (3+): No real issue is missed, so a defect does not escape to a later, costlier stage.
+Summary Organization (3+): Findings are triaged (blocking vs cosmetic), so the reviewer acts in seconds — the time saving is realized, not eaten by parsing a wall of output.
+Recommendation Quality (3+): The "ready to proceed" call is trustworthy, so the change merges without a second human pass.
+
+Gate outcome: 3+ on all four → the run is safe to accept unattended → the full ~8-minute / ~$0.23-per-run review burden is removed for that run, and the agent's token cost is justified because it replaces human review time rather than adding to it. A run below the floor keeps the human in the loop, so no time or cost saving is counted.
+
+
 ## Notes on Threshold Design
 
 Considered an aggregate minimum (e.g., 12/16). Ruled out because a run that fabricates findings (1 on Lint Execution Accuracy) could still "pass" on points by being well-organized and confident -- which is the worst failure mode for a review tool. The dimension floor blocks that.

@@ -86,6 +86,18 @@ A run is passing if it scores 3 or higher on all dimensions.
 
 Reasoning: An import/compile check is only trustworthy if the agent actually ran it, covered every file, reported failures clearly, and gave a sound recommendation. A weakness in any one makes the "all clear" unreliable, so a dimension floor is appropriate.
 
+Threshold → Business Outcomes
+
+The pass floor is tied to the Module 1 baseline: the import/compile check cost ~8 minutes of human review and ~$0.26 in tokens at 16/16 quality. The thresholds decide when "the backend is runnable" can be trusted without a human re-check — below the floor, a person must re-verify, so the saving is not claimed.
+
+Check Execution Accuracy (3+): The check actually ran, so "the backend builds" is a verified fact, not a guess — downstream work isn't started on a broken base (avoids wasted cycles and a failed deploy).
+File Coverage (3+): Every backend file is checked, so no un-compiled file slips through — prevents a broken module reaching deploy.
+Error Reporting Clarity (3+): A failure names the file and the actual error, so the fix is immediate rather than a debugging hunt — keeps cycle time down.
+Recommendation Quality (3+): The runnable/not-runnable call distinguishes an incidental standalone-script import failure (e.g. test_sms.py's live-call-at-import) from a real app break — avoids both false blocks (wasted time) and false "all clear" (a broken backend shipped).
+
+Gate outcome: 3+ on all four → the backend's runnability is confirmed without a human pre-flight re-check → removes that ~8-minute / ~$0.26-per-run step. Below the floor keeps the human in the loop, so no saving is counted.
+
+
 ## Notes on Threshold Design
 
 Considered an aggregate minimum (12/16). Ruled out because a run that skipped files (low File Coverage) could still pass on points while giving a false sense of safety. The dimension floor prevents a confident-but-incomplete check from passing.
