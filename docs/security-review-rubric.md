@@ -39,7 +39,7 @@ Whether the agent stayed read-only and in format. High: no files modified, repor
 ## Pass Threshold
 Pass = 3 or higher on every dimension. A security review that fabricates findings (low Finding Accuracy) or misclassifies severity is worse than useless, so a dimension floor applies.
 
-Threshold → Business Outcomes
+## Threshold → Business Outcomes
 
 A security review's value is risk avoided and a manual security sign-off removed: when the review is trustworthy, a change can merge without a separate human security pass, yet a real vulnerability still gets stopped. The thresholds decide when that trust holds.
 

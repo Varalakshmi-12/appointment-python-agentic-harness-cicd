@@ -86,7 +86,7 @@ A run is passing if it scores 3 or higher on all dimensions.
 
 Reasoning: An import/compile check is only trustworthy if the agent actually ran it, covered every file, reported failures clearly, and gave a sound recommendation. A weakness in any one makes the "all clear" unreliable, so a dimension floor is appropriate.
 
-Threshold → Business Outcomes
+## Threshold → Business Outcomes
 
 The pass floor is tied to the Module 1 baseline: the import/compile check cost ~8 minutes of human review and ~$0.26 in tokens at 16/16 quality. The thresholds decide when "the backend is runnable" can be trusted without a human re-check — below the floor, a person must re-verify, so the saving is not claimed.
 

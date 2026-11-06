@@ -87,7 +87,7 @@ A run is passing if it scores 3 or higher on all dimensions.
 Reasoning: For a lint-review workflow to be trustworthy, the agent must actually run the linter, report real findings completely, organize them usefully, and give a sound recommendation. A weakness in any one of these makes the summary misleading or unactionable, so a dimension floor is appropriate.
 
 
-Threshold → Business Outcomes
+## Threshold → Business Outcomes
 
 The pass floor is tied to the Module 1 baseline: each change cost ~8 minutes of human review and ~$0.23 in tokens at 16/16 quality. The thresholds decide when a run is trustworthy enough to remove that review burden — a dimension below its floor means a human must still review, so the saving is not claimed.
 
