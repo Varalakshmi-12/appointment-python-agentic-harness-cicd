@@ -1,5 +1,9 @@
 # PRD: Backend Import/Compile Check Workflow
 
+**Stakeholder:** The backend engineer shipping Flask changes, who needs fast confirmation that every backend file still compiles and the app module imports before work proceeds.
+
+**Failure modes:** an incidental import failure in a standalone test script (e.g. a live external call at import) mislabeled as the app being unrunnable; a missing dependency reported as a code fault.
+
 ## Workflow Description
 
 This workflow verifies that every Python file in the Flask backend compiles and imports without errors, and reports the result.

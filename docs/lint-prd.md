@@ -1,5 +1,9 @@
 # PRD: Backend Lint Review Workflow
 
+**Stakeholder:** The backend engineer shipping Flask changes, who needs lint findings triaged (cosmetic vs functional) without spending their own review time on style issues.
+
+**Failure modes:** linter not installed at runtime; false "ready to proceed" when a functional bug hides among style warnings; report overwritten or not saved.
+
 ## Workflow Description
 
 This workflow runs a Python linter over the Flask backend and produces a prioritized summary of the issues it finds.
