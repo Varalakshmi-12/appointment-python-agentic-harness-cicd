@@ -9,7 +9,7 @@ Run: python retrieval_eval.py
 Prepared by: Varalakshmi
 """
 
-from retrieval_index import RetrievalIndex, SIMILARITY_FLOOR
+from retrieval_index import RetrievalIndex, SEMANTIC_FLOOR
 
 GROUND_TRUTH = [
     ("Q1", "Why did SMS appointment reminders never reach patients?",
@@ -30,7 +30,7 @@ GROUND_TRUTH = [
 def main() -> int:
     idx = RetrievalIndex()
     hits = 0
-    print(f"similarity_floor = {SIMILARITY_FLOOR}\n")
+    print(f"similarity_floor = {SEMANTIC_FLOOR}\n")
     print(f"{'ID':<4}{'top-1 hit':<10}{'score':<9}{'margin':<9}method")
     for qid, query, expected in GROUND_TRUTH:
         results = idx.search(query, limit=3)

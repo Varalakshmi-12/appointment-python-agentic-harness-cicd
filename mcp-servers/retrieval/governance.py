@@ -103,6 +103,7 @@ def retrieve_with_governance(
             "title": c.title,
             "chunk_index": c.chunk_index,
             "similarity": c.similarity,
+            "lexical_score": c.lexical_score,
             "retrieval_method": c.retrieval_method,
             "classification": c.classification,
             "source": c.source,

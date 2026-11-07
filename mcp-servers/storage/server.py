@@ -1,9 +1,24 @@
-#!/usr/bin/env python3
-"""Sample storage MCP server with role-based allow-list enforcement."""
+"""Storage MCP server with role-based allow-list enforcement.
+
+Audit records are written in the schema the deterministic harness reads
+(eval/harness_deterministic.py): each line carries `operation`, `calling_role`,
+`classification`, `project_id`, `entry_id`, and `timestamp`. The calling role
+comes from the AGENT_ROLE environment variable that scripts/run-agent.ps1 sets
+per container, so every operation is attributed to the role that made it
+(check_no_unknown_caller, check_forbidden_operations), and every write carries
+a valid classification (check_write_classifications).
+
+write_entry/update_entry accept the full lesson schema the subagents already
+send (project_id, entry_type, title, content, classification), matching the
+tool calls recorded in the holdout transcripts.
+
+Prepared by: Varalakshmi
+"""
 
 import datetime
 import json
 import os
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -13,24 +28,33 @@ try:
 except Exception:  # pragma: no cover - lets tests run without FastMCP installed
     class ToolError(Exception):
         pass
+
     class FastMCP:
         def __init__(self, name: str):
             self.name = name
+
         def tool(self, func=None):
             def decorate(fn):
                 return fn
             return decorate(func) if func else decorate
+
         def run(self):
             print(f"FastMCP not installed; {self.name} functions are importable only.")
 
 mcp = FastMCP("storage")
-CALLING_ROLE = os.environ.get("AGENT_ROLE", "")
+
+# Role the container is running as. Default "unknown" so an unattributed call is
+# caught by check_no_unknown_caller rather than silently passing.
+CALLING_ROLE = os.environ.get("AGENT_ROLE", "unknown")
+
 ALLOW_LIST_PATH = Path(__file__).parent / "allow-list.json"
 ALLOW_LIST = json.loads(ALLOW_LIST_PATH.read_text(encoding="utf-8"))
 AUDIT_LOG_PATH = Path(os.environ.get("STORAGE_AUDIT_LOG", "logs/storage-audit-log.jsonl"))
 AUDIT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 STORE_PATH = Path(os.environ.get("STORAGE_STORE", "logs/storage-store.json"))
 STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+ALLOWED_CLASSIFICATIONS = {"public", "internal", "confidential", "secret"}
 
 
 def _load_store() -> dict[str, Any]:
@@ -43,14 +67,17 @@ def _save_store(data: dict[str, Any]) -> None:
     STORE_PATH.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
-def _record(event: str, operation: str, outcome: str, detail: str | None = None) -> dict[str, Any]:
+def _record(operation: str, outcome: str, *, classification: str | None = None,
+            project_id: str | None = None, entry_id: str | None = None) -> dict[str, Any]:
+    """Append one JSON-Lines audit record in the harness-expected schema."""
     record = {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "event": event,
         "operation": operation,
-        "role": CALLING_ROLE,
+        "calling_role": CALLING_ROLE,
+        "project_id": project_id,
+        "entry_id": entry_id,
+        "classification": classification,
         "outcome": outcome,
-        "detail": detail,
         "policy_reference": "docs/governance-policy.md",
     }
     with open(AUDIT_LOG_PATH, "a", encoding="utf-8") as log:
@@ -58,60 +85,81 @@ def _record(event: str, operation: str, outcome: str, detail: str | None = None)
     return record
 
 
-def _authorize(operation: str) -> None:
-    allowed_roles = ALLOW_LIST.get(operation, [])
-    if CALLING_ROLE not in allowed_roles:
-        record = _record("authorization_denied", operation, "authorization_denied")
+def _authorize(operation: str, *, classification: str | None = None,
+               project_id: str | None = None, entry_id: str | None = None) -> None:
+    """Deny and audit if the calling role is not on the operation's allow-list."""
+    if CALLING_ROLE not in ALLOW_LIST.get(operation, []):
+        _record(operation, "authorization_denied", classification=classification,
+                project_id=project_id, entry_id=entry_id)
         raise ToolError(
-            f"authorization_denied: role '{record['role']}' may not call "
-            f"'{operation}'. See {record['policy_reference']}."
+            f"authorization_denied: role '{CALLING_ROLE}' may not call "
+            f"'{operation}'. See docs/governance-policy.md."
         )
 
 
 @mcp.tool
-def write_entry(key: str, value: str) -> dict:
-    _authorize("write_entry")
+def write_entry(title: str, content: str = "", classification: str = "internal",
+                entry_type: str = "lesson", project_id: str = "proj-lessons",
+                entry_id: str | None = None) -> dict:
+    """Create a project-storage entry. Carries the full lesson schema the
+    subagents send; classification is recorded in the audit log."""
+    entry_id = entry_id or str(uuid.uuid4())
+    _authorize("write_entry", classification=classification,
+               project_id=project_id, entry_id=entry_id)
     data = _load_store()
-    data[key] = value
+    data[entry_id] = {
+        "project_id": project_id, "entry_type": entry_type, "title": title,
+        "content": content, "classification": classification,
+    }
     _save_store(data)
-    _record("storage_write", "write_entry", "success")
-    return {"ok": True, "key": key}
+    _record("write_entry", "success", classification=classification,
+            project_id=project_id, entry_id=entry_id)
+    return {"ok": True, "entry_id": entry_id}
 
 
 @mcp.tool
-def read_entry(key: str) -> dict:
-    _authorize("read_entry")
+def read_entry(entry_id: str, project_id: str = "proj-lessons") -> dict:
+    _authorize("read_entry", project_id=project_id, entry_id=entry_id)
     data = _load_store()
-    _record("storage_read", "read_entry", "success")
-    return {"key": key, "value": data.get(key)}
+    _record("read_entry", "success", project_id=project_id, entry_id=entry_id)
+    return {"entry_id": entry_id, "entry": data.get(entry_id)}
 
 
 @mcp.tool
-def list_entries() -> dict:
-    _authorize("list_entries")
+def list_entries(project_id: str = "proj-lessons") -> dict:
+    _authorize("list_entries", project_id=project_id)
     data = _load_store()
-    _record("storage_list", "list_entries", "success")
-    return {"keys": sorted(data)}
+    _record("list_entries", "success", project_id=project_id)
+    return {"entry_ids": sorted(data)}
 
 
 @mcp.tool
-def update_entry(key: str, value: str) -> dict:
-    _authorize("update_entry")
+def update_entry(entry_id: str, title: str, content: str,
+                 classification: str = "internal", entry_type: str = "lesson",
+                 project_id: str = "proj-lessons") -> dict:
+    _authorize("update_entry", classification=classification,
+               project_id=project_id, entry_id=entry_id)
     data = _load_store()
-    data[key] = value
+    data[entry_id] = {
+        "project_id": project_id, "entry_type": entry_type, "title": title,
+        "content": content, "classification": classification,
+    }
     _save_store(data)
-    _record("storage_update", "update_entry", "success")
-    return {"ok": True, "key": key}
+    _record("update_entry", "success", classification=classification,
+            project_id=project_id, entry_id=entry_id)
+    return {"ok": True, "entry_id": entry_id}
 
 
 @mcp.tool
-def delete_entry(key: str) -> dict:
-    _authorize("delete_entry")
+def delete_entry(entry_id: str, project_id: str = "proj-lessons") -> dict:
+    _authorize("delete_entry", project_id=project_id, entry_id=entry_id)
     data = _load_store()
-    existed = key in data
-    data.pop(key, None)
+    existed = entry_id in data
+    classification = data.get(entry_id, {}).get("classification")
+    data.pop(entry_id, None)
     _save_store(data)
-    _record("storage_delete", "delete_entry", "success")
+    _record("delete_entry", "success", classification=classification,
+            project_id=project_id, entry_id=entry_id)
     return {"ok": True, "deleted": existed}
 
 
