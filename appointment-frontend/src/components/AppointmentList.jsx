@@ -12,9 +12,19 @@ export default function AppointmentList() {
   }, []);
 
   const handleStatusChange = async (id, status) => {
-    await API.patch(`/appointments/${id}/status`, { status });
+    let cancellation_reason;
+    if (status === "cancelled") {
+      const reason = window.prompt("Reason for cancellation (optional, max 500 characters)");
+      if (reason === null) return;
+      cancellation_reason = reason.trim() || undefined;
+    }
+    await API.patch(`/appointments/${id}/status`, { status, cancellation_reason });
     setAppointments((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status } : a))
+      prev.map((a) =>
+        a.id === id
+          ? { ...a, status, ...(status === "cancelled" ? { cancellation_reason: cancellation_reason ?? null } : {}) }
+          : a
+      )
     );
   };
 
@@ -39,7 +49,7 @@ export default function AppointmentList() {
               <td>{a.patient_phone}</td>
               <td>{a.provider_name}</td>
               <td>{a.patient_email}</td>
-              <td>{a.appointment_time}</td>
+              <td>{a.appointment_time ? new Date(a.appointment_time).toLocaleString() : ""}</td>
               <td>
                 <select
                   value={a.status}
@@ -51,6 +61,11 @@ export default function AppointmentList() {
                     </option>
                   ))}
                 </select>
+                {a.cancellation_reason && (
+                  <div>
+                    <small>{a.cancellation_reason}</small>
+                  </div>
+                )}
               </td>
               <td>
                 <Link to={`/edit/${a.id}`}>Edit</Link>

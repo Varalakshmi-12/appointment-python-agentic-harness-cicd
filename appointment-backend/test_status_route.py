@@ -3,6 +3,7 @@
 Separate from test_mysql.py on purpose: that module connects to the DB at
 import time. All DB, SMS and email calls are mocked here.
 """
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -11,7 +12,7 @@ import app as app_module
 
 
 def _make_mock_conn(current_status, patient_name="Jane Doe", patient_phone="+15551234567",
-                    patient_email="jane@example.com", appointment_time="2026-10-01 10:00:00",
+                    patient_email="jane@example.com", appointment_time=datetime(2026, 10, 1, 10, 0, 0),
                     row_exists=True):
     """Mock DB connection whose cursor returns one appointment row (or None)."""
     mock_cursor = MagicMock()
@@ -154,11 +155,21 @@ def test_all_valid_transitions(client, current, new):
     cursor = m["conn"].cursor.return_value
     update_calls = [c for c in cursor.execute.call_args_list if "UPDATE" in c.args[0]]
     assert len(update_calls) == 1
-    assert update_calls[0].args[1] == (new, 1)
+    # Cancellation also writes cancellation_reason (None when none supplied; decision-008).
+    expected = (new, None, 1) if new == "cancelled" else (new, 1)
+    assert update_calls[0].args[1] == expected
     m["conn"].commit.assert_called_once()
     m["sms"].assert_called_once()
     m["email"].assert_called_once()
     m["conn"].close.assert_called_once()
+
+
+def test_sms_time_is_utc_iso(client):
+    r, m = _send(client, {"json": {"status": "confirmed"}}, current_status="scheduled")
+    assert r.status_code == 200
+    sms_text = m["sms"].call_args.args[1]
+    assert "2026-10-01T10:00:00Z" in sms_text
+    assert "UTC" in sms_text
 
 
 def test_illegal_non_terminal_transition_is_409(client):

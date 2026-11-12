@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import API from "../api";
+import API, { localInputToUtcIso, utcIsoToLocalInput } from "../api";
 import { Link } from "react-router-dom";
 
 export default function EditAppointment() {
@@ -8,7 +8,9 @@ export default function EditAppointment() {
   const [form, setForm] = useState(null);
 
   useEffect(() => {
-    API.get(`/appointments/${id}`).then((res) => setForm(res.data));
+    API.get(`/appointments/${id}`).then((res) =>
+      setForm({ ...res.data, appointment_time: utcIsoToLocalInput(res.data.appointment_time) })
+    );
   }, [id]);
 
   const handleChange = (e) => {
@@ -16,7 +18,10 @@ export default function EditAppointment() {
   };
 
   const handleUpdate = async () => {
-    await API.put(`/appointments/${id}`, form);
+    await API.put(`/appointments/${id}`, {
+      ...form,
+      appointment_time: localInputToUtcIso(form.appointment_time)
+    });
     alert("Updated!");
   };
 

@@ -4,6 +4,8 @@ import mysql.connector
 from twilio.rest import Client
 from dotenv import load_dotenv
 import os
+import re
+from datetime import datetime, timezone
 from werkzeug.exceptions import HTTPException
 
 import smtplib
@@ -65,6 +67,82 @@ def handle_not_found(e):
     return e
 
 VALID_STATUSES = {"scheduled", "confirmed", "completed", "cancelled", "no-show"}
+MAX_CANCELLATION_REASON_LEN = 500
+
+# Create-route (POST /appointments) validation limits.
+MAX_NAME_LEN = 255
+MAX_PHONE_LEN = 20
+MAX_EMAIL_LEN = 255
+MAX_PROVIDER_LEN = 255
+_PHONE_RE = re.compile(r"^\+?[0-9]{7,19}$")
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_CREATE_FORBIDDEN = {"id", "cancellation_reason"}
+_INVALID_STATUS_MSG = "Invalid status"
+
+
+def validate_appointment_create(data):
+    """Validate and normalise the body of POST /appointments.
+
+    Args:
+        data (dict): Parsed JSON body.
+
+    Returns:
+        (clean, None) on success, where clean has exactly the keys
+        patient_name, patient_phone, provider_name, patient_email, status
+        (unknown input keys are dropped). (None, msg) on failure, where msg is
+        a fixed string that never includes input values. When msg equals
+        _INVALID_STATUS_MSG the route adds the "allowed" list.
+    """
+    if _CREATE_FORBIDDEN & set(data):
+        return None, "Field not allowed on create"
+
+    name = data.get("patient_name")
+    if not isinstance(name, str):
+        return None, "patient_name is required"
+    name = name.strip()
+    if not name:
+        return None, "patient_name is required"
+    if len(name) > MAX_NAME_LEN:
+        return None, "patient_name is too long"
+
+    phone = data.get("patient_phone")
+    if phone is not None:
+        if not isinstance(phone, str):
+            return None, "patient_phone must be a string"
+        phone = phone.strip() or None
+        if phone is not None and not _PHONE_RE.match(phone):
+            return None, "patient_phone is invalid"
+
+    provider = data.get("provider_name")
+    if provider is not None:
+        if not isinstance(provider, str):
+            return None, "provider_name must be a string"
+        provider = provider.strip() or None
+        if provider is not None and len(provider) > MAX_PROVIDER_LEN:
+            return None, "provider_name is too long"
+
+    email = data.get("patient_email")
+    if not isinstance(email, str):
+        return None, "patient_email is required"
+    email = email.strip()
+    if not email:
+        return None, "patient_email is required"
+    if len(email) > MAX_EMAIL_LEN:
+        return None, "patient_email is too long"
+    if not _EMAIL_RE.match(email):
+        return None, "patient_email is invalid"
+
+    status = data.get("status", "scheduled")
+    if not isinstance(status, str) or status not in VALID_STATUSES:
+        return None, _INVALID_STATUS_MSG
+
+    return {
+        "patient_name": name,
+        "patient_phone": phone,
+        "provider_name": provider,
+        "patient_email": email,
+        "status": status,
+    }, None
 
 # Legal status transitions for PATCH /appointments/<id>/status (decision-007).
 # Resubmitting the current status is handled separately as an idempotent no-op.
@@ -80,6 +158,44 @@ STATUS_TRANSITIONS = {
     "cancelled": set(),
     "no-show":   set(),
 }
+
+# -----------------------------
+# UTC time helpers
+# -----------------------------
+def parse_utc(value):
+    """Parse an ISO 8601 timestamp with an offset into a naive UTC datetime.
+
+    Args:
+        value (str): ISO 8601 string with an explicit offset or a trailing
+            "Z" (1 to 64 characters).
+
+    Returns:
+        datetime: Naive datetime (tzinfo None) in UTC, suitable for MySQL.
+
+    Raises:
+        ValueError: If value is not a str of length 1..64, cannot be parsed,
+        or has no UTC offset.
+    """
+    if not isinstance(value, str) or not 1 <= len(value) <= 64:
+        raise ValueError("appointment_time must be a string of 1 to 64 characters")
+    if value.endswith("Z"):
+        value = value[:-1] + "+00:00"
+    dt = datetime.fromisoformat(value)
+    if dt.tzinfo is None or dt.utcoffset() is None:
+        raise ValueError("appointment_time must include a UTC offset")
+    return dt.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def to_iso_utc(dt):
+    """Format a naive UTC datetime as an ISO 8601 string ending in "Z".
+
+    Returns None if dt is None; any non-datetime value is returned unchanged.
+    """
+    if dt is None:
+        return None
+    if isinstance(dt, datetime):
+        return dt.replace(tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
+    return dt
 
 # -----------------------------
 # Database Connection
@@ -196,31 +312,50 @@ def create_appointment():
 
     Method: POST /appointments
     Input (JSON body): {
-        "patient_name": str,
-        "patient_phone": str,
-        "provider_name": str,
-        "patient_email": str,
-        "appointment_time": str,
-        "status": str (optional, one of VALID_STATUSES, defaults to "scheduled")
+        "patient_name": str (required, trimmed, 1..255),
+        "patient_phone": str (optional; absent, null or blank is stored as
+            null; otherwise trimmed and must match an optional "+" followed
+            by 7..19 digits),
+        "provider_name": str (optional; absent, null or blank is stored as
+            null; otherwise trimmed, max 255),
+        "patient_email": str (required, trimmed, max 255, must look like
+            local@domain.tld),
+        "appointment_time": str (ISO 8601 with offset or "Z"),
+        "status": str (optional, one of VALID_STATUSES, case-sensitive, no
+            trimming; defaults to "scheduled")
     }
+    Unknown keys are silently ignored and never reach SQL.
     Returns:
         201 with JSON {"id": <new appointment id>, "message": "Appointment created"}
         on success.
-        400 with JSON {"error": <str>} if "status" is provided but not one of
-        VALID_STATUSES.
+        400 with JSON {"error": <str>} for: a body that is not a JSON object;
+        "id" or "cancellation_reason" present ("Field not allowed on create");
+        a missing, non-string, blank or over-long patient_name or
+        patient_email; a non-string or invalid patient_phone; a non-string or
+        over-long provider_name; an invalid patient_email format; an unknown
+        status (also includes "allowed": <sorted list>); or a missing or bad
+        appointment_time ("Invalid appointment_time"). Raw input is never
+        echoed. All validation runs before any DB access.
         500 with JSON {"error": <str>} if any step (DB insert, etc.) raises.
 
     Side effects: Inserts a row into the appointments table, then sends a
-    confirmation SMS and a confirmation email to the patient. Email failures
-    are caught and logged so they don't fail the request; SMS failures are
-    handled inside send_sms itself.
+    confirmation SMS (only if a phone number was given) and a confirmation
+    email to the patient. Email failures are caught and logged so they don't
+    fail the request; SMS failures are handled inside send_sms itself.
     """
     try:
-        data = request.json
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({"error": "Request body must be a JSON object"}), 400
 
-        status = data.get("status", "scheduled")
-        if status not in VALID_STATUSES:
-            return jsonify({"error": f"Invalid status: {status}"}), 400
+        clean, error = validate_appointment_create(data)
+        if error is not None:
+            if error == _INVALID_STATUS_MSG:
+                return jsonify({"error": error, "allowed": sorted(VALID_STATUSES)}), 400
+            return jsonify({"error": error}), 400
+
+        # Raises ValueError (handled below) on a missing or bad time.
+        appointment_dt = parse_utc(data.get("appointment_time"))
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -231,12 +366,12 @@ def create_appointment():
         """
 
         values = (
-            data["patient_name"],
-            data["patient_phone"],
-            data["provider_name"],
-            data["patient_email"],
-            data["appointment_time"],
-            status
+            clean["patient_name"],
+            clean["patient_phone"],
+            clean["provider_name"],
+            clean["patient_email"],
+            appointment_dt,
+            clean["status"]
         )
 
         cursor.execute(sql, values)
@@ -244,18 +379,19 @@ def create_appointment():
 
         appointment_id = cursor.lastrowid
 
-        # Send SMS AFTER DB commit
-        send_sms(
-            data["patient_phone"],
-            f"Hello {data['patient_name']}, your appointment is confirmed for {data['appointment_time']}."
-        )
+        # Send SMS AFTER DB commit (only when a phone number was given)
+        if clean["patient_phone"] is not None:
+            send_sms(
+                clean["patient_phone"],
+                f"Hello {clean['patient_name']}, your appointment is confirmed for {to_iso_utc(appointment_dt)} UTC."
+            )
 
         # Send email AFTER DB commit (wrapped so a failure can't break the request)
         try:
             send_email(
-                data['patient_email'],
+                clean['patient_email'],
                 "Appointment Confirmation",
-                f"Hello {data['patient_name']}, your appointment with {data['provider_name']} is confirmed for {data['appointment_time']}."
+                f"Hello {clean['patient_name']}, your appointment with {clean['provider_name']} is confirmed for {to_iso_utc(appointment_dt)} UTC."
             )
         except Exception as e:
             print("Email error:", e)
@@ -268,6 +404,8 @@ def create_appointment():
     except (KeyError, TypeError, AttributeError) as e:
         print("Create appointment error - invalid input:", e)
         return jsonify({"error": "Invalid request data"}), 400
+    except ValueError:
+        return jsonify({"error": "Invalid appointment_time"}), 400
     except Exception as e:
         print("Create appointment error:", e)
         return jsonify({"error": "An unexpected error occurred"}), 500
@@ -282,7 +420,8 @@ def get_appointments():
     Method: GET /appointments
     Input: None.
     Returns:
-        200 with a JSON array of appointment rows (each a dict of columns).
+        200 with a JSON array of appointment rows (each a dict of columns,
+        including cancellation_reason, which is null unless one was given).
         500 with JSON {"error": <str>} if the query fails.
     """
     try:
@@ -294,6 +433,9 @@ def get_appointments():
 
         cursor.close()
         conn.close()
+
+        for row in rows:
+            row["appointment_time"] = to_iso_utc(row["appointment_time"])
 
         return jsonify(rows), 200
 
@@ -311,7 +453,8 @@ def get_appointment(id):
     Method: GET /appointments/<id>
     Input: `id` (int) in the URL path.
     Returns:
-        200 with a JSON object for the matching appointment row, if found.
+        200 with a JSON object for the matching appointment row, if found
+        (includes cancellation_reason, null unless one was given).
         404 with JSON {"message": "Appointment not found"} if no row matches.
         500 with JSON {"error": <str>} if the query fails.
     """
@@ -326,6 +469,7 @@ def get_appointment(id):
         conn.close()
 
         if row:
+            row["appointment_time"] = to_iso_utc(row["appointment_time"])
             return jsonify(row), 200
         else:
             return jsonify({"message": "Appointment not found"}), 404
@@ -364,6 +508,8 @@ def update_appointment(id):
     try:
         data = request.json
 
+        appointment_dt = parse_utc(data["appointment_time"])
+
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -378,7 +524,7 @@ def update_appointment(id):
             data["patient_phone"],
             data["provider_name"],
             data["patient_email"],
-            data["appointment_time"],
+            appointment_dt,
             id
         )
 
@@ -390,7 +536,7 @@ def update_appointment(id):
             send_email(
                 data['patient_email'],
                 "Appointment updated Confirmation",
-                f"Hello {data['patient_name']}, your appointment with {data['provider_name']} is confirmed for {data['appointment_time']}."
+                f"Hello {data['patient_name']}, your appointment with {data['provider_name']} is confirmed for {to_iso_utc(appointment_dt)} UTC."
             )
         except Exception as e:
             print("Email error:", e)
@@ -406,7 +552,7 @@ def update_appointment(id):
         # Send SMS
         send_sms(
             data["patient_phone"],
-            f"Hello {data['patient_name']}, your appointment has been updated to {data['appointment_time']}."
+            f"Hello {data['patient_name']}, your appointment has been updated to {to_iso_utc(appointment_dt)} UTC."
         )
 
         return jsonify({"message": "Appointment updated"}), 200
@@ -414,6 +560,8 @@ def update_appointment(id):
     except (KeyError, TypeError, AttributeError) as e:
         print("Update appointment error - invalid input:", e)
         return jsonify({"error": "Invalid request data"}), 400
+    except ValueError:
+        return jsonify({"error": "Invalid appointment_time"}), 400
     except Exception as e:
         print("Update appointment error:", e)
         return jsonify({"error": "An unexpected error occurred"}), 500
@@ -430,7 +578,11 @@ def update_appointment_status(id):
         `id` (int) in the URL path; must be >= 1. Non-integer or negative
         ids never match the route and get a JSON 400 from the 404 handler.
         JSON body: {"status": str}; status must exactly match one of
-        VALID_STATUSES (case-sensitive, no trimming).
+        VALID_STATUSES (case-sensitive, no trimming). Optional
+        "cancellation_reason": str or null; trimmed, and empty or
+        whitespace-only becomes None. Max 500 characters after trimming. A
+        non-empty reason is only allowed when status is "cancelled"; a null
+        or empty reason on any other status is accepted and ignored.
     Returns:
         200 with JSON {"message": "Status updated", "status": <str>} on success,
         including when the requested status equals the appointment's current
@@ -438,6 +590,9 @@ def update_appointment_status(id):
         400 with JSON {"error": <str>} for an invalid id, a body that is not
         a JSON object, a missing or non-string "status", or an unknown
         status. An unknown status also includes "allowed": <sorted list>.
+        400 also covers a non-string "cancellation_reason", one over 500
+        characters (includes "max_length": 500), or a reason given with a
+        status other than "cancelled".
         The raw input is never echoed. Validation runs before any DB access.
         404 with JSON {"error": "Appointment not found", "message":
         "Appointment not found"} if `id` doesn't match any row ("message" is
@@ -451,7 +606,9 @@ def update_appointment_status(id):
         keep their own status code.
 
     Side effects: Updates only the status column (patient/time details are
-    left untouched), then sends a status-specific SMS and email. Email
+    left untouched); on a real transition to "cancelled" it also stores
+    cancellation_reason (re-cancelling is a no-op and never overwrites an
+    existing reason). The reason is not included in the SMS or email. Then sends a status-specific SMS and email. Email
     failures are caught and logged rather than raised; SMS failures are
     handled inside send_sms itself. No notifications are sent for a
     same-status no-op, since nothing changed. The DB cursor and connection
@@ -471,6 +628,20 @@ def update_appointment_status(id):
         return jsonify({"error": "status must be a string"}), 400
     if status not in VALID_STATUSES:
         return jsonify({"error": "Invalid status", "allowed": sorted(VALID_STATUSES)}), 400
+
+    reason = data.get("cancellation_reason")
+    if reason is not None:
+        if not isinstance(reason, str):
+            return jsonify({"error": "cancellation_reason must be a string"}), 400
+        reason = reason.strip() or None
+    if reason is not None:
+        if len(reason) > MAX_CANCELLATION_REASON_LEN:
+            return jsonify({
+                "error": "cancellation_reason is too long",
+                "max_length": MAX_CANCELLATION_REASON_LEN,
+            }), 400
+        if status != "cancelled":
+            return jsonify({"error": "cancellation_reason is only allowed when status is cancelled"}), 400
 
     conn = None
     cursor = None
@@ -499,7 +670,13 @@ def update_appointment_status(id):
                     "allowed": sorted(allowed),
                 }), 409
 
-            cursor.execute("UPDATE appointments SET status=%s WHERE id=%s", (status, id))
+            if status == "cancelled":
+                cursor.execute(
+                    "UPDATE appointments SET status=%s, cancellation_reason=%s WHERE id=%s",
+                    (status, reason, id)
+                )
+            else:
+                cursor.execute("UPDATE appointments SET status=%s WHERE id=%s", (status, id))
             conn.commit()
         finally:
             if cursor is not None:
@@ -513,12 +690,13 @@ def update_appointment_status(id):
                 except Exception as close_err:
                     print("Connection close error:", close_err)
 
+        time_text = f"{to_iso_utc(row['appointment_time'])} UTC"
         messages = {
-            "scheduled": f"Hello {row['patient_name']}, your appointment has been scheduled for {row['appointment_time']}.",
-            "confirmed": f"Hello {row['patient_name']}, your appointment has been confirmed for {row['appointment_time']}.",
+            "scheduled": f"Hello {row['patient_name']}, your appointment has been scheduled for {time_text}.",
+            "confirmed": f"Hello {row['patient_name']}, your appointment has been confirmed for {time_text}.",
             "cancelled": f"Hello {row['patient_name']}, your appointment has been cancelled.",
             "completed": f"Hello {row['patient_name']}, your appointment has been marked as completed.",
-            "no-show": f"Hello {row['patient_name']}, you were marked as a no-show for your appointment on {row['appointment_time']}.",
+            "no-show": f"Hello {row['patient_name']}, you were marked as a no-show for your appointment on {time_text}.",
         }
         message = messages[status]
 

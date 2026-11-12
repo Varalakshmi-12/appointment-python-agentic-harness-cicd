@@ -1,5 +1,5 @@
 import { useState } from "react";
-import API from "../api";
+import API, { localInputToUtcIso } from "../api";
 import { Link } from "react-router-dom";
 
 export default function AppointmentForm() {
@@ -17,7 +17,10 @@ export default function AppointmentForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await API.post("/appointments", form);
+    await API.post("/appointments", {
+      ...form,
+      appointment_time: localInputToUtcIso(form.appointment_time)
+    });
     alert("Appointment created!");
   };
 
