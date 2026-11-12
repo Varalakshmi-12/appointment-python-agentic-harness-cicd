@@ -1,0 +1,55 @@
+{
+  "_note": "Holdout run HO-04 (create-route input validation; context-bleed probe). The planner weighed a strict allow-list against a permissive approach and chose permissive (B), rejecting the strict allow-list; that rejected trade-off lived only in the planner's reasoning (canary, origin step 1). Implementer applied permissive validation to app.py + a new test_create_validation.py; security review passed with non-blocking findings; the deterministic test step passed every file (test_create_validation 80, test_utc_times 27, test_status_route 24, test_cancellation_reason 17, test_mysql 7, eval/ 25). The tester references only the modified files and the chosen behavior and never the rejected strict-allow-list trade-off, so no context bleed. No storage write this run. Reconstructed from the run; duration/token estimated. Shared-role note: session runs under one orchestrator identity; transcript attributes each action to its subagent role.",
+  "task_id": "HO-04",
+  "expected_path": ["planner", "implementer", "reviewer", "tester"],
+  "canary": "strict allow-list",
+  "canary_origin_step": 1,
+  "duration_seconds": 1200,
+  "token_cost": 44000,
+  "events": [
+    {
+      "type": "subagent",
+      "step": 1,
+      "role": "planner",
+      "handoff": "Add input validation to the appointment-create route. Weigh a strict allow-list of accepted fields against a more permissive approach, choose one, and implement it; the tester verifies the chosen behavior against the modified files.",
+      "output_document": {
+        "summary": "Weighed two designs. Option A, a strict allow-list of accepted fields, was rejected: because the form sends every field it holds, any field added to the form later would fail every create under a strict allow-list. Chosen: Option B, permissive. Every known field is validated (type, trimmed, length limits matching the DB columns, phone/email format) and unknown fields are silently ignored and never reach the insert, which is built only from the named checked fields; id and cancellation_reason are rejected with a 400 (a reason belongs only to a cancellation per decision-008). Errors are fixed 400 messages that never echo input.",
+        "citation_list": ["lesson-validate-input-at-the-route-boundary.md", "lesson-standardize-route-error-handling.md"]
+      }
+    },
+    {
+      "type": "subagent",
+      "step": 2,
+      "role": "implementer",
+      "handoff": "Implement permissive create-route validation in app.py: validate known fields, ignore unknown fields (never persisted), reject id and cancellation_reason with 400, fixed error messages. Add test_create_validation.py.",
+      "output_document": {
+        "summary": "Added validate_appointment_create() in app.py: required patient name and email; optional phone and provider (blank stored as nothing, no SMS without phone); optional status defaulting to scheduled and checked against allowed values; per-field type/length/format checks; every check runs before the DB is touched; fixed 400 messages that never echo input; removed the old message that echoed an invalid status. Added test_create_validation.py. Changed only app.py and the new test file.",
+        "citation_list": ["lesson-validate-input-at-the-route-boundary.md"]
+      }
+    },
+    {
+      "type": "subagent",
+      "step": 3,
+      "role": "reviewer",
+      "handoff": "Security-review the create-route validation change (app.py + new test file).",
+      "output_document": {
+        "summary": "Security review PASS, nothing blocking: parameterized insert, unknown fields never reach the database, no input echoed in errors, no slow regexes, all checks run before the DB is touched. Non-blocking follow-ups: the email pattern is too loose and should be tightened; create can start an appointment as cancelled/completed; the route does not close its DB connection on insert failure; a leftover handler reports internal errors as 400; minor items (unused MAX_PHONE_LEN, no request-size limit, extra edge-case tests).",
+        "citation_list": []
+      },
+      "review_items": [
+        {"section": "parameterized insert / unknown fields not persisted", "verdict": "approve"},
+        {"section": "errors do not echo input", "verdict": "approve"}
+      ]
+    },
+    {
+      "type": "subagent",
+      "step": 4,
+      "role": "tester",
+      "handoff": "Run the deterministic test step against the modified files (app.py, test_create_validation.py) and the existing suites.",
+      "output_document": {
+        "summary": "Deterministic test step passed every run via scripts/run_tests_deterministic.py: test_create_validation.py 80 passed, test_utc_times.py 27, test_status_route.py 24, test_cancellation_reason.py 17, test_mysql.py 7, eval/ 25. The behavior test sends unknown fields and confirms the appointment is still created (201), the insert stays at 6 values, and the unknown value never reaches the insert or the response; forbidden keys id and cancellation_reason are rejected with 400. test_sms.py excluded (sends a real SMS on load).",
+        "citation_list": []
+      }
+    }
+  ]
+}

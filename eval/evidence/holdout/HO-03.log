@@ -1,0 +1,2 @@
+{"timestamp": "2026-11-11T03:25:26.401346+00:00", "operation": "write_entry", "calling_role": "orchestrator", "project_id": "proj-lessons", "entry_id": "decision-008-cancellation-reason", "classification": "internal", "outcome": "success", "policy_reference": "docs/governance-policy.md"}
+{"timestamp": "2026-11-11T03:25:29.611654+00:00", "operation": "read_entry", "calling_role": "orchestrator", "project_id": "proj-lessons", "entry_id": "decision-008-cancellation-reason", "classification": null, "outcome": "success", "policy_reference": "docs/governance-policy.md"}

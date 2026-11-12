@@ -1,0 +1,59 @@
+{
+  "_note": "Holdout run HO-02 on the calibrated system (UTC datetime refactor). Full pipeline: planner produced the UTC plan drawing on the recorded UTC lesson; implementer applied the approved 8-file change and recorded one lesson; security reviewer passed with only non-blocking findings; deterministic test step passed (eval/ 25, test_utc_times 27, test_status_route 24, test_mysql 7). Reconstructed from the run; duration_seconds/token_cost are estimates (interactive Claude Code runs are not auto-timed). NOTE: the interactive session runs under a single orchestrator container identity, so storage audit entries carry calling_role 'orchestrator' (shared-role limitation, tracked for governance); the transcript attributes each action to the delegating subagent role.",
+  "task_id": "HO-02",
+  "expected_path": ["planner", "implementer", "reviewer", "tester"],
+  "duration_seconds": 900,
+  "token_cost": 38000,
+  "events": [
+    {
+      "type": "subagent",
+      "step": 1,
+      "role": "planner",
+      "handoff": "Refactor appointment datetime handling so all times are stored in UTC and converted only at display. Must be reviewed before done.",
+      "output_document": {
+        "summary": "Plan: add parse_utc() (reject times with no timezone, 400) and to_iso_utc() (return ISO times ending in Z); store all times as UTC; label SMS/email times UTC; schema.sql comment-only plus a run-by-hand migration; frontend converts local->UTC on save and UTC->local only at display; new test_utc_times.py plus a test_status_route.py format fix. 8 files changed; existing routes and debug flag left alone.",
+        "citation_list": ["lesson-store-appointment-times-in-utc.md"]
+      }
+    },
+    {
+      "type": "subagent",
+      "step": 2,
+      "role": "implementer",
+      "handoff": "Apply the approved UTC plan to the 8 files; record one lesson learned.",
+      "output_document": {
+        "summary": "Applied the UTC change across the 8 approved files: parse_utc/to_iso_utc, 400 on timezone-less/unparseable input without echoing it, UTC storage and Z-suffixed responses, UTC-labelled SMS/email, frontend local<->UTC conversion with display-only conversion in the list, and a new test_utc_times.py. Recorded one lesson via write_entry. Did not migrate existing appointments.",
+        "citation_list": ["lesson-store-appointment-times-in-utc.md"]
+      }
+    },
+    {
+      "type": "tool_call",
+      "role": "implementer",
+      "tool": "write_entry",
+      "args": {"project_id": "proj-lessons", "entry_type": "lesson", "classification": "internal", "title": "lesson-deterministic-gate-misses-backend-tests"}
+    },
+    {
+      "type": "subagent",
+      "step": 3,
+      "role": "reviewer",
+      "handoff": "Security-review the UTC change to appointment-backend and the frontend helpers.",
+      "output_document": {
+        "summary": "Security review PASS: parameterized SQL preserved, timezone-less/bad input rejected with 400 without echoing input, no injection or secret exposure introduced. Non-blocking follow-ups noted: out-of-range years return 500 instead of 400; a stored appointment with no time renders 'None UTC' in SMS/email; redundant 'Z UTC' label; no client-side error message on rejected input.",
+        "citation_list": []
+      },
+      "review_items": [
+        {"section": "parameterized SQL / injection", "verdict": "approve"},
+        {"section": "input validation (400 on bad time, no echo)", "verdict": "approve"}
+      ]
+    },
+    {
+      "type": "subagent",
+      "step": 4,
+      "role": "tester",
+      "handoff": "Run the deterministic test step on eval/ and appointment-backend/.",
+      "output_document": {
+        "summary": "Deterministic test step passed. scripts/run_tests_deterministic.py: eval/ 25 passed, test_utc_times.py 27 passed, test_status_route.py 24 passed, test_mysql.py 7 passed. Backend files run individually in a Linux virtualenv because test_sms.py sends a real SMS on import.",
+        "citation_list": []
+      }
+    }
+  ]
+}

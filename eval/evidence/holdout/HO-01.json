@@ -1,0 +1,29 @@
+{
+  "_note": "Holdout run HO-01 on the calibrated system. appt-planner queried the retrieval server (vector/GloVe) for prior SMS-notification lessons and summarized them for the plan, separating lesson-grounded claims from its own code reading. Reconstructed from the run; duration_seconds/token_cost are estimates (interactive Claude Code runs are not auto-timed).",
+  "task_id": "HO-01",
+  "expected_path": ["planner"],
+  "duration_seconds": 300,
+  "token_cost": 9000,
+  "events": [
+    {
+      "type": "subagent",
+      "step": 1,
+      "role": "planner",
+      "handoff": "Before re-adding SMS reminders, find what we recorded about why SMS notifications previously never reached patients; summarize in 2-3 sentences for the plan. Query the retrieval server first.",
+      "output_document": {
+        "summary": "SMS reminders looked implemented but never reached patients: the routes called send_sms(), but the Twilio client was never configured. With no credentials loaded, the function returned without error and callers ignored its result, so nothing failed visibly or appeared in logs. The lesson is that an integration function existing doesn't prove it works; a stub that returns quietly is worse than one that raises, and SMS sends should be confirmed by what Twilio reports back (a message ID or status), not by our code finishing without an exception.",
+        "citation_list": ["lesson-sms-notifications-were-never-wired.md"]
+      }
+    },
+    {
+      "type": "tool_call",
+      "role": "planner",
+      "tool": "retrieve",
+      "args": {"query": "why did SMS notifications never reach patients", "project_id": "proj-lessons"},
+      "result": {"results": [
+        {"source_document": "lesson-sms-notifications-were-never-wired", "chunk_index": 2, "similarity": 0.82, "retrieval_method": "vector"},
+        {"source_document": "lesson-store-appointment-times-in-utc", "chunk_index": 0, "similarity": 0.81, "retrieval_method": "vector"}
+      ]}
+    }
+  ]
+}
