@@ -17,7 +17,7 @@ client = Client(account_sid, auth_token)
 message = client.messages.create(
     body="Hello ",
     from_=twilio_number,
-    to="+15103645765"
+    to="+15551234567"
 )
 
 print("Message SID:", message.sid)

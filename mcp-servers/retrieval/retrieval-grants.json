@@ -1,32 +1,14 @@
 {
   "retrieve": {
-    "implementer": {
-      "granted": true,
-      "classification_ceiling": "internal"
-    },
-    "reviewer": {
-      "granted": true,
-      "classification_ceiling": "internal"
-    },
-    "tester": {
-      "granted": true,
-      "classification_ceiling": "internal"
-    },
-    "orchestrator": {
-      "granted": true,
-      "classification_ceiling": "confidential"
-    },
-    "project-manager": {
-      "granted": false,
-      "denial_reason": "project-manager does not perform retrieval"
-    },
-    "planner": {
-      "granted": true,
-      "classification_ceiling": "internal"
-    },
-    "dependency-auditor": {
-      "granted": true,
-      "classification_ceiling": "internal"
-    }
+    "orchestrator": {"granted": true, "classification_ceiling": "confidential"},
+    "planner": {"granted": true, "classification_ceiling": "internal"},
+    "security-reviewer": {"granted": true, "classification_ceiling": "internal"},
+    "code-reviewer": {"granted": true, "classification_ceiling": "internal"},
+    "reviewer": {"granted": true, "classification_ceiling": "internal"},
+    "quality_reviewer": {"granted": true, "classification_ceiling": "internal"},
+    "dependency-auditor": {"granted": true, "classification_ceiling": "internal"},
+    "tester": {"granted": true, "classification_ceiling": "internal"},
+    "implementer": {"granted": false, "denial_reason": "implementer is write-only (records lessons); it does not retrieve"},
+    "project-manager": {"granted": false, "denial_reason": "project-manager does not perform retrieval"}
   }
 }

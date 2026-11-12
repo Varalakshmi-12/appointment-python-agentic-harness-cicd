@@ -65,7 +65,7 @@ To widen access, open a pull request with: the proposed grant, a concrete justif
 | write_entry  | storage   | NO      | Must not author state |
 | update_entry | storage   | NO      | Must not mutate state |
 | delete_entry | storage   | NO      | Must not remove state |
-| retrieve     | retrieval | YES     | Needs reference lessons to plan; ceiling internal. (Requires adding `planner` to retrieval/allow-list.json — see enforcement step.) |
+| retrieve     | retrieval | YES     | Needs reference lessons to plan; ceiling internal. (Requires adding `planner` to retrieval/retrieval-grants.json — see enforcement step.) |
 
 ### Skill activation scope
 | Skill                | Permitted | Reason |

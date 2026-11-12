@@ -283,7 +283,7 @@ def test_sms():
     Returns: Plain-text "SMS sent!" (200). Used only to verify Twilio
     configuration; not part of the appointment workflow.
     """
-    send_sms("+15103645765", "Test message from you system!")
+    send_sms("+15551234567", "Test message from you system!")
     return "SMS sent!"
 
 @app.route('/test-email')
@@ -296,7 +296,7 @@ def test_email():
     configuration; not part of the appointment workflow.
     """
     send_email(
-        "pandu.chetan27@gmail.com",
+        "test@example.com",
         "Test Email",
         "This is a test email from your appointment backend."
     )

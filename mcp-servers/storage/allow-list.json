@@ -1,32 +1,8 @@
 {
-  "write_entry": [
-    "implementer",
-    "orchestrator"
-  ],
-  "read_entry": [
-    "implementer",
-    "reviewer",
-    "tester",
-    "project-manager",
-    "orchestrator",
-    "dependency-auditor"
-  ],
-  "list_entries": [
-    "implementer",
-    "reviewer",
-    "tester",
-    "project-manager",
-    "orchestrator",
-    "dependency-auditor"
-  ],
-  "update_entry": [
-    "implementer",
-    "orchestrator"
-  ],
-  "delete_entry": [
-    "orchestrator"
-  ],
-  "audit_read": [
-    "orchestrator"
-  ]
+  "write_entry": ["implementer", "orchestrator"],
+  "read_entry": ["reviewer", "tester", "project-manager", "orchestrator", "dependency-auditor"],
+  "list_entries": ["reviewer", "tester", "project-manager", "orchestrator", "dependency-auditor"],
+  "update_entry": ["orchestrator"],
+  "delete_entry": ["orchestrator"],
+  "audit_read": ["orchestrator"]
 }
