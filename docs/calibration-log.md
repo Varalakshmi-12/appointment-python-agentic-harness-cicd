@@ -151,3 +151,41 @@ A before-fix artifact (HO-06-before-fix.json/.log, 13/14 with calling_role: "unk
   conversion causes no regression. The tester gate now completes instead of halting.
 
 - **Evidence:** implementation commit 33e40ba; unit-test run 6/6 passing in container.
+
+## 2026-11-12: Shared-role identity (storage attribution)
+
+- **Failure mode:** Shared-process role identity. The storage server fixed its
+  `calling_role` once at launch from the container's `AGENT_ROLE`, so in a live
+  session every subagent's write was attributed to the single container role
+  (`orchestrator`), and the first HO-06 run even logged `calling_role: "unknown"`.
+  Per-role least-privilege could not hold within a session — the Implementer's
+  call was indistinguishable from the orchestrator's.
+- **Check that caught it:** `no_unknown_caller` (FAIL on the first HO-06 run,
+  13/14) surfaced the attribution gap. The live retrieval audit confirmed the
+  root cause by contrast: retrieval already takes `calling_role` as a tool
+  argument and correctly logged `planner` / `security-reviewer`, while storage
+  logged only `orchestrator`.
+- **Root-cause hypothesis:** The storage server read a module-global
+  `CALLING_ROLE = os.environ.get("AGENT_ROLE")` once, instead of taking the
+  caller's role per request. One container serves every subagent, so one env
+  value stood in for all of them.
+- **Fix layer:** Enforcement point (MCP server).
+- **Fix applied:** Each storage tool now accepts `calling_role` as a per-call
+  argument (falling back to `AGENT_ROLE`), the way the retrieval server already
+  does, and authorizes + audits against it. `appt-implementer.md` passes
+  `calling_role=implementer` (v1.2.0). The storage allow-list, routing map and
+  retrieval grants were reconciled so the Implementer is write-only in all four
+  places; the dead `retrieval/allow-list.json` duplicate was removed.
+- **Verification (specific evidence):** `eval/test_per_role_enforcement.py` —
+  **5/5 passing.** With the container running as `orchestrator`, an Implementer
+  attempting `delete_entry` and `read_entry` is DENIED (`authorization_denied`),
+  while `orchestrator` can delete; a call with no `calling_role` falls back to
+  the env. The audit records the real per-role `calling_role`, never `unknown`.
+- **Regression:** HO-06 re-run after the fix scores 14/14 (was 13/14); the
+  before/after pair is kept as `HO-06-before-fix.json/.log` → `HO-06.json/.log`.
+- **Residual risk:** attribution now depends on each subagent passing its
+  `calling_role`; a writer that does not pass it falls back to the container
+  role. The Implementer (the only storage-writing subagent) passes it.
+- **Evidence:** `eval/test_per_role_enforcement.py`;
+  `eval/evidence/holdout/HO-06{,-before-fix}.json` + `.log`;
+  `eval/evidence/retrieval-governance-live.jsonl`.

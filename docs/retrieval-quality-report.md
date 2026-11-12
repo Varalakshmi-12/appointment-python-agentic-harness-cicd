@@ -84,15 +84,17 @@ Off-topic queries are correctly rejected (zero citations): verified with
 The per-role grant map is **data**, read from `retrieval-grants.json` (the
 single source of truth, mirrored by the routing/tool-grant map), not hardcoded.
 Only `orchestrator` carries a `confidential` ceiling; every other retrieving
-role is capped at `internal`; `project-manager` is not granted `retrieve` at
-all. Role names normalize (`project_manager` ≡ `project-manager`).
+role is capped at `internal`; `project-manager` and `implementer` are not
+granted `retrieve` at all (the implementer is write-only). Role names normalize
+(`project_manager` ≡ `project-manager`).
 
 Exercised against the confidential lesson
 (`notification-cost-and-vendor-budget`, classification `confidential`):
 
 | Caller | Ceiling | Query | Outcome | Audit line |
 |--------|---------|-------|---------|-----------|
-| `implementer` | internal | budget-ceiling query | confidential lesson **withheld** | `classification_withheld` |
+| `implementer` | (not granted `retrieve`) | any | **denied** | `retrieve_denied` (reason: "implementer is write-only; it does not retrieve") |
+| `security-reviewer` / `code-reviewer` | internal | budget-ceiling query | confidential lesson **withheld** | `classification_withheld` |
 | `reviewer` | internal | budget-ceiling query | confidential lesson **withheld** | `classification_withheld` |
 | `tester` | internal | budget-ceiling query | confidential lesson **withheld** | `classification_withheld` |
 | `planner` | internal | budget-ceiling query | confidential lesson **withheld** | `classification_withheld` |
@@ -105,9 +107,9 @@ Audit output is JSON-Lines, matching the storage server's format
 `calling_role`). Example:
 
 ```json
-{"timestamp": "2026-11-06T...+00:00", "operation": "classification_withheld", "project_id": "proj-lessons", "entry_id": "lesson-notification-cost-and-vendor-budget", "classification": "confidential", "calling_role": "reviewer", "ceiling": "internal"}
+{"timestamp": "2026-11-06T...+00:00", "operation": "classification_withheld", "project_id": "proj-lessons", "entry_id": "lesson-notification-cost-and-vendor-budget", "classification": "confidential", "calling_role": "security-reviewer", "ceiling": "internal"}
 {"timestamp": "2026-11-06T...+00:00", "operation": "retrieve", "project_id": "proj-lessons", "entry_id": "lesson-notification-cost-and-vendor-budget", "classification": "confidential", "calling_role": "orchestrator"}
-{"timestamp": "2026-11-06T...+00:00", "operation": "retrieve_denied", "project_id": "proj-lessons", "calling_role": "project-manager", "reason": "project-manager does not perform retrieval"}
+{"timestamp": "2026-11-06T...+00:00", "operation": "retrieve_denied", "project_id": "proj-lessons", "calling_role": "implementer", "reason": "implementer is write-only; it does not retrieve"}
 ```
 
 ---
