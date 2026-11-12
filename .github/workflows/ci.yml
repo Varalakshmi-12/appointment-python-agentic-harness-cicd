@@ -77,13 +77,30 @@ jobs:
           retention-days: 90
           if-no-files-found: ignore
 
-  test:
-   name: Test Suite
-   needs: policy-gate
-   runs-on: ubuntu-latest
-   steps:
-     - uses: actions/checkout@v4
-     # ...the rest of the baseline job from Section 1        
+    test:
+    name: Deterministic Test Gate
+    needs: policy-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test deps
+        run: pip install pytest pytest-json-report
+      - name: Run deterministic test gate (timeout + retry + budget controls active)
+        run: |
+          mkdir -p ci-artifacts
+          python scripts/run_gate.py --tests eval/ --output ci-artifacts/gate-result.json
+      - name: Upload gate result + controls log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-result
+          path: |
+            ci-artifacts/gate-result.json
+            logs/controls-log.jsonl
+          if-no-files-found: ignore       
 
     
   

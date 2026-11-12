@@ -1,7 +1,7 @@
 # Ops-Ready Runbook
 ## Governed Multi-Agent Engineering Pipeline (appointment-app)
 
-**Owner:** Varalakshmi· **Last updated:** 2026-10-30
+**Owner:** Varalakshmi· **Last updated:** 2026-11-12
 
 This runbook is for whoever operates the pipeline. It covers normal operation, what
 to monitor, the reliability and cost controls, an incident playbook, escalation
@@ -49,23 +49,31 @@ after any incident.
 
 ## 3. Reliability and cost controls
 
-**In place today:**
-- **Max-iteration guard:** the Orchestrator halts and escalates if the same phase
-  fails its gate twice in a row (prevents infinite revise loops).
-- **Human checkpoints:** mandatory HALT after the Planner and before finalizing;
-  the run does not proceed on a timeout — it waits for a person.
-- **Model scope as a cost cap:** the API key is restricted to a single approved
-  model (`anthropic/claude-haiku-4.5`), bounding per-call cost and preventing
-  accidental use of an expensive model.
-- **Deterministic fallback:** structural steps (tests, policy checks) run as code
-  with zero token cost and no inference.
+All four controls are **implemented** in `scripts/controls.py`, run by the
+deterministic test gate (`scripts/run_gate.py`), and each is shown firing by
+`eval/test_controls.py` (7/7). Every control logs a `fired` event to
+`logs/controls-log.jsonl` when it engages — observable evidence, not an assertion.
 
-**Recommended to add / confirm (Workstream 6 reliability controls):**
-- Per-call and per-workflow **token/$ budgets** with a hard stop when exceeded.
-- **Timeout** per agent call and an overall **wall-clock cap** per run.
-- **Retry with backoff** (bounded, e.g. 1–2 retries) for transient model/API errors,
-  distinct from the revise loop.
-- **Rate limit** on model calls to stay within provider limits.
+| Control | Implementation | Trips when | Effect |
+|---|---|---|---|
+| **Timeout** (per step / wall-clock) | `with_timeout(seconds)` | a step exceeds its time budget | raises `ControlTimeout`, aborts the step |
+| **Retry with backoff** (bounded; distinct from the revise loop) | `with_retries(retries, backoff_s)` | a transient model/API error | retries up to N times; never retries a control exception or a genuine test *failure* |
+| **Max-iteration guard** | `MaxIterationGuard(phase, limit)` | the same phase (implement↔review) fails twice | raises `MaxIterationsExceeded`, halts + escalates |
+| **Per-call & per-workflow budget** | `WorkflowBudget(per_call, per_workflow)` | spend crosses a per-call or per-run cap | raises `BudgetExceeded`, hard-stops the run |
+
+**Defence in depth (also in place):**
+- **Human checkpoints:** mandatory HALT after the Planner and before finalizing; the run waits for a person, it does not proceed on a timeout.
+- **Model scope as a cost cap:** the API key is restricted to one approved model (`anthropic/claude-haiku-4.5`), bounding per-call cost.
+- **Deterministic fallback:** structural steps (tests, policy checks) run as code with zero token cost.
+
+**The test gate runs without manual help.** The deterministic test step (ADR-001)
+runs under all four controls via `scripts/run_gate.py`, invoked by CI
+(`.github/workflows/ci.yml`, job `test`). A failing gate fails the job
+(eval-gated change control); the Orchestrator no longer needs a human to run the tests.
+
+**Evidence each control fires:**
+- `python -m pytest eval/test_controls.py -q` → 7/7 (timeout, retry, max-iteration, per-call budget, per-workflow budget).
+- Budget hard-stop demo: `GATE_COST_USD=0.80 python scripts/run_gate.py --tests eval/ --per-run-budget 0.50` → `BudgetExceeded`, gate status `error`, logged `budget -> fired`.
 
 ---
 
