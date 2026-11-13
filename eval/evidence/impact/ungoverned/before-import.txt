@@ -1,0 +1,23 @@
+BEFORE STATE — appointment-backend/test_sms.py (defective version, on main)
+
+On import, the module runs top-level code (no __main__ guard):
+  - prints TWILIO_SID / TWILIO_AUTH / TWILIO_NUMBER to stdout  (credential exposure)
+  - constructs a Twilio Client and calls client.messages.create(...)  (live-call attempt at import)
+
+Severity note: the integration is NOT wired up (dummy creds, no connected account),
+so no SMS is actually sent — this is a Warning-level import-safety + credential-print
+defect, not a Critical "sends real texts" vector.
+
+Demonstrations:
+  1. Clean container (twilio not installed): `python -c "import test_sms"`
+       -> ModuleNotFoundError (module not import-safe) — raw trace below.
+  2. With twilio installed + dummy creds: importing prints the three credential lines,
+       then fails at Client(...)/messages.create(...), confirming top-level side effects
+       on import. Not executed live here, to avoid an outbound Twilio call.
+
+--- Raw trace (clean container) ---
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/workspace/appointment-backend/test_sms.py", line 1, in <module>
+    from twilio.rest import Client
+ModuleNotFoundError: No module named 'twilio'
