@@ -21,3 +21,18 @@ Only the necessary change, nothing unrelated.
 ### 5. Governance Compliance
 Separation of duties, tool-grant enforcement, and an audit trail for the change.
 1: none (single agent, unrestricted). 2: roles named but not enforced. 3: role separation enforced (implementer can't exceed its grant). 4: enforced + reviewer sign-off + audit entry.
+
+## Threshold → Business Outcomes
+
+The pass bar (3+ on every dimension) marks a fix a team can merge without a separate manual
+QA or security pass, and that will not silently return:
+- **Regression Test ≥ 3 → rework avoided.** A locked fix can't recur unnoticed, so no one pays
+  to re-diagnose the same defect later (projected ~2–4 eng-hrs per avoided recurrence; see
+  `docs/impact-report.md`).
+- **Governance ≥ 3 → review labor removed, risk bounded.** Enforced separation + an independent
+  review + an audit trail let the change merge without a human security sign-off while still
+  stopping an over-reach.
+- **Defect Resolution + Correctness ≥ 3 → safe to ship.** The reported defect is gone and
+  nothing else broke.
+A fix below the bar on Regression Test or Governance is cheaper and faster to produce but
+carries exactly the recurrence and review-labor costs the governed pipeline removes.
