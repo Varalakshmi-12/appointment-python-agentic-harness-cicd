@@ -1,0 +1,11 @@
+## Ungoverned baseline — test_sms.py import-time Twilio defect — 2026-11-12
+- Model: claude-sonnet-5-5 (matches pipeline agents `model: sonnet` and Module baselines)
+- Mode: single agent, one shot — no planner/reviewer/tester, no gate, no audit
+- Cycle time: ~1 min wall-clock (prompt -> finish); 16s of that API-active compute
+- Cost: $0.1496 (sonnet: 608 in / 1.5k out / 246.2k cache-read / 27.2k cache-write; + $0.0001 haiku bg)
+- Review latency: manual human review required before merge (~6-8 min per Module baseline); none automated
+- Defect resolution: FIXED — `import test_sms` prints nothing, exits 0 (no cred prints, no live call at import)
+- Code change: 13 added / 16 removed; exec moved under `if __name__ == "__main__":`; 3 credential prints removed; imports left at module top
+- Regression test added: NO
+- Fix rubric: Defect 4 / Correctness 3 / RegTest 1 / Scope 4 / Governance 1 = 13/20 -> FAILS pass bar (3+ floor) on RegTest and Governance
+- Defect-escape: no test locks the fix; top-level code could be re-introduced with nothing to catch it; deterministic gate would pass vacuously (no import-safety test exists)
