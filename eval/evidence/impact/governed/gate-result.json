@@ -1,0 +1,9 @@
+{
+  "status": "pass",
+  "exit_code": 0,
+  "tests_path": "eval/",
+  "output_tail": [
+    "........................................                                 [100%]",
+    "40 passed in 4.19s"
+  ]
+}
