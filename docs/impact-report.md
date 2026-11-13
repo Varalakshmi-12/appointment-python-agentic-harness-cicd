@@ -36,7 +36,7 @@ a **Warning-level import-safety + credential-print defect**, not a Critical "sen
 texts" vector. Stating that assumption explicitly is itself a lesson carried forward from
 Module 2 (see §4, Cycle 1).
 
-**Why this task:** it is a real defect your Module 1 import-check *detected but never
+**Why this task:** it is a real defect the Module 1 import-check *detected but never
 fixed*, it carries a security dimension (so the pipeline's security-reviewer role is
 exercised), and it is small enough to run both ways cheaply and reproducibly.
 
@@ -201,7 +201,7 @@ comparison (which §2 now provides).
 
 - **Governance is not free, and this report does not pretend it is.** On one matched task
   it cost ~6× the dollars and ~15× the time.
-- **What that buys is quality you can verify and defects that cannot silently return:** a
+- **What that buys is quality that can be verified and defects that cannot silently return:** a
   fix that passes the bar instead of failing it (20/20 vs 13/20), a regression test inside
   the gate, an independent security review, institutional memory applied to severity, and
   an audit trail — none of which the faster, cheaper lone agent produced.
