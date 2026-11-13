@@ -77,7 +77,7 @@ jobs:
           retention-days: 90
           if-no-files-found: ignore
 
-    test:
+  test:
     name: Deterministic Test Gate
     needs: policy-gate
     runs-on: ubuntu-latest
