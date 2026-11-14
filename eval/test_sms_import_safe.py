@@ -29,6 +29,9 @@ def twilio_spy(monkeypatch):
     twilio_mod.rest = rest_mod
     monkeypatch.setitem(sys.modules, "twilio", twilio_mod)
     monkeypatch.setitem(sys.modules, "twilio.rest", rest_mod)
+    dotenv_mod = types.ModuleType("dotenv")
+    dotenv_mod.load_dotenv = lambda *args, **kwargs: None
+    monkeypatch.setitem(sys.modules, "dotenv", dotenv_mod)
     return client_cls
 
 
