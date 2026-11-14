@@ -136,6 +136,7 @@ Every required artifact and where to find it.
 | **Containerized harness** (fs/network/credential boundaries) | `Dockerfile`, `docker-entrypoint.sh`, `scripts/run-agent.sh`, `scripts/run-agent.ps1` |
 | **Module 1 — PRD** | `docs/lint-prd.md` `docs/import-check-prd.md`|
 | **Module 1 — quality rubric + thresholds** | `docs/import-check-rubric.md`,`docs/lint-rubric.md``eval/rubric.json`, `eval/harness_rubric_suite.py` |
+| **Capstone quality rubric + business-outcome thresholds (#3)** | `docs/security-review-rubric.md` (4 dimensions, examples per level, per-dimension thresholds tied to business outcomes), `eval/test-sms-fix-rubric.md` (defect-fix rubric), `docs/security-review-iteration-log.md` (v0.1.0→v0.1.1 improvement cycle) |
 | **Module 1 — baseline + iteration log** | `docs/iteration-log.md` |
 | **Module 2 — agent definitions** | `agents/appt-orchestrator.md`, `appt-implementer.md`, `appt-security-reviewer.md`, `appt-import-checker.md` |
 | **Module 2 — skills (≥2)** | `skills/`  |
@@ -143,9 +144,9 @@ Every required artifact and where to find it.
 | **Module 2 — reflection log** | `docs/calibration-log.md` |
 | **Module 3 — orchestration diagram** | `docs/appt-orchestration-diagram.md` |
 | **Module 3 — routing & tool-grant map** | `docs/routing-and-tool-grant-map.md`, `docs/routing-and-tool-grant-map.json` |
-| **Module 3 — MCP config + schemas** | `.mcp.json`, `mcp-servers/storage/{server.py,schema.json,allow-list.json}`, `mcp-servers/retrieval/…` |
+| **Module 3 — MCP config + schemas** | `.mcp.json`, `mcp-servers/storage/{server.py,schema.json,allow-list.json}`, `mcp-servers/retrieval/…` ,`eval/evidence/retrieval-governance-live.jsonl (live role-scoped retrieval + denials)`|
 | **Module 3 — retrieval quality report + ground truth** | `docs/retrieval-validation-results.md`, `docs/proj-lessons-ground-truth.md`  |
-| **Module 3 — eval harness + holdout set** | `eval/harness_deterministic.py`, `docs/holdout-task-ste.md` (HO-* holdout) |
+| **Module 3 — eval harness + holdout set (#6)** | `eval/harness_deterministic.py`, `docs/holdout-task-set.md` (task set), `eval/evidence/holdout/HO-01…06.{json,log}` (six scored runs, 14/14), `eval/evidence/holdout/HO-06-before-fix.{json,log}` (the 13/14→14/14 calibration pair) |
 | **Module 3 — calibration log** | `docs/calibration-log.md` |
 | **Module 4 — governance policy** | `docs/governance-policy.md` |
 | **Module 4 — role-to-tool access matrix** | `docs/appt-routing-and-tool-grant-map.md` |
@@ -156,8 +157,30 @@ Every required artifact and where to find it.
 | **Module 4 — deterministic conversion + ADR** | `scripts/run_tests_deterministic.py`, `docs/adr/ADR-001-tester-deterministic-conversion.md` |
 | **ADR package** | `docs/adr/` (ADR-001 … ADR-007) |
 | **Enforcement verification + red-team** | `eval/enforcement-verification.md`, `eval/red-team-prompts.md`, `eval/red-team-results.md`, `scripts/probe.py` |
-| **Production integration (end-to-end run)** | `docs/run-summary.md`, `eval/evidence/run-A-*`, `eval/evidence/run-B-*` |
-| **Impact, right-tool drill, stakeholder one-pager, ops runbook** | `docs/impact-report.md`, `docs/tool-evolution-drill.md`, `docs/stakeholder-one-pager.md`, `docs/ops-runbook.md` |
+| **Production integration + reliability/cost controls (#9)** | `docs/run-summary.md`, `eval/evidence/run-A-*`, `eval/evidence/run-B-*`, `eval/evidence/controls-firing-evidence.jsonl` (each control firing), `eval/evidence/gate-result.json` (autonomous gate pass), `scripts/controls.py`, `scripts/run_gate.py` |
+| **Impact, right-tool drill, stakeholder one-pager, ops runbook** | `docs/impact-report.md`, `docs/tool-evolution-drill.md`, `docs/stakeholder-one-pager.md`, `docs/ops-runbook.md` ,`eval/evidence/impact/`|
+
+## 7. Repository map — evidence index
+
+Every rubric criterion and where its evidence lives. Runtime logs under `logs/` are gitignored;
+the committed audit evidence is under `eval/evidence/`.
+
+| Rubric criterion | Evidence |
+|---|---|
+| **1 · Workflow Scoping** | `docs/capstone-scope.md` — workflow, quantified baseline pain, stakeholder, trigger/inputs/outputs, pass/fail acceptance criteria, failure modes, and the "why a custom pipeline, not a prebuilt agent or a simpler script" argument |
+| **2 · Sandboxed Environment** | `Dockerfile`, `docker-entrypoint.sh`, `scripts/run-agent.sh`, `scripts/run-agent.ps1`; README §1–§5 (prerequisites, env vars, run path) and §10 (troubleshooting) |
+| **3 · Quality Spec & Baseline** | PRDs `docs/lint-prd.md`, `docs/import-check-prd.md` (trigger, decisions, actions, acceptance, stakeholder, failure modes); rubrics `docs/security-review-rubric.md` (capstone quality rubric — 4 dimensions, example per level, per-dimension thresholds tied to business outcomes), `docs/lint-rubric.md`, `docs/import-check-rubric.md`, `eval/test-sms-fix-rubric.md`; baseline `docs/iteration-log.md` |
+| **4 · Agent, Skills & Memory** | agents `agents/appt-orchestrator.md`, `appt-implementer.md`, `appt-security-reviewer.md`; skills `skills/`; memory layers `.memory/` + `docs/memory-architecture.md`; reflection `docs/reflection-log.md` (entries with before/after scores + pruned stale entry with written reason), `docs/memory-iteration-log.md` |
+| **5 · Orchestration & MCP** | diagram `docs/appt-orchestration-diagram.md`; routing/grant map `docs/routing-and-tool-grant-map.md` + `.json`; MCP `.mcp.json`, `mcp-servers/storage/server.py`, `mcp-servers/retrieval/retrieval_index.py` + `server.py` (embedding vector tool); retrieval quality `docs/retrieval-quality-report.md`, `docs/retrieval-validation-results.md`, `docs/proj-lessons-ground-truth.md` |
+| **6 · Evaluation & Calibration** | harness `eval/harness_deterministic.py`; holdout set `docs/holdout-task-set.md`; scored runs `eval/evidence/holdout/HO-01…06.{json,log}` (14/14) + `HO-06-before-fix.{json,log}` (the 13/14→14/14 calibration pair); `docs/calibration-log.md` |
+| **7 · Governance, Security & CI/CD** | policy `docs/governance-policy.md`; role→tool matrix `docs/routing-and-tool-grant-map.md` + storage `mcp-servers/storage/allow-list.json`; live per-role enforcement test `eval/test_per_role_enforcement.py`; CI `.github/workflows/ci.yml`, `scripts/check-pipeline-integrity.py`; committed audit evidence `eval/evidence/retrieval-governance-live.jsonl`, `eval/evidence/run-A-storage-audit.jsonl`, `eval/evidence/run-B-authz-denied.jsonl`; audit builder `scripts/build-audit-trail.py` |
+| **8 · Right-Tool Decisions & ADRs** | `docs/step-classification.md`; deterministic conversion `scripts/run_tests_deterministic.py`; ADR package `docs/adr/` (incl. ADR-001 tester conversion) |
+| **9 · Production Integration & Drill** | end-to-end run `docs/run-summary.md`; reliability/cost controls `scripts/controls.py`, `scripts/run_gate.py`, `eval/evidence/controls-firing-evidence.jsonl` (each control shown firing), `eval/evidence/gate-result.json` (gate passes with no manual help); drill `docs/tool-evolution-drill.md`; `docs/failure-mode-playbook.md`, `docs/ops-runbook.md`, `docs/near-miss-risks.md` |
+| **10 · Iteration Narrative & Impact** | `docs/impact-report.md` (like-for-like full-pipeline vs single-agent, all five metrics, measured vs projected); experiment evidence `eval/evidence/impact/ungoverned/` & `eval/evidence/impact/governed/`, `eval/test-sms-fix-rubric.md`, `eval/test_sms_import_safe.py`, `appointment-backend/test_sms.py` (fixed); improvement cycles `docs/reflection-log.md`, `docs/security-review-iteration-log.md` |
+| **11 · Stakeholder Communication** | `docs/stakeholder-one-pager.md` (labeled hours/dollars projections, one page); walkthrough video (submitted separately) |
+| **12–13 · Clarity & Design** | walkthrough presentation / video (submitted separately) |
+
+Red-team & enforcement verification: `eval/red-team-prompts.md`, `eval/enforcement-verification.md`, `scripts/probe.py`. Full write-up: `docs/final-report.md`, `docs/architecture-writeup.md`.
 
 ---
 
