@@ -1,10 +1,8 @@
 # Ops-Ready Runbook
 
-**Owner:** Varalakshmi · 
-**Last updated:** 2026-11-12.
 ## Governed Multi-Agent Engineering Pipeline (appointment-app)
 
-**Owner:** Varalakshmi· **Last updated:** 2026-11-12
+Owner: Varalakshmi · Last updated: 2026-11-12
 
 This runbook is for whoever operates the pipeline. It covers normal operation, what
 to monitor, the reliability and cost controls, an incident playbook, escalation
