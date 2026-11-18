@@ -1,23 +1,29 @@
 """
 Retrieval MCP server (stdio).
 
-Thin transport wrapper. All ranking lives in retrieval_index.py (real TF-IDF
-vector search + FTS5 keyword fallback over the lessons corpus) and all
-governance in governance.py (per-role classification ceiling, withheld-audit,
-citation shaping). This file only exposes the `retrieve` tool over stdio and
-passes the caller's role through.
+Thin transport wrapper. All ranking lives in retrieval_index.py (dense-vector
+retrieval using spaCy GloVe word-vector embeddings, en_core_web_md 300-dim,
+cosine similarity, with a TF-IDF lexical gate and an FTS5 keyword fallback over
+the lessons corpus) and all governance in governance.py (per-role
+classification ceiling, withheld-audit, citation shaping). This file only
+exposes the `retrieve` tool over stdio and passes the caller's role through.
 
 The replaced placeholder
 ------------------------
 The earlier version of this server ranked with a word-count stub
 (`score = sum(1 for term in query_terms if term in text)`) over three dummy
 docs and carried a `# Replace with sqlite-vec / embedding search` TODO. That
-stub is gone: ranking is now cosine similarity over a TF-IDF index built from
-the eight real lesson files, verified by retrieval_eval.py (precision@1 = 6/6).
+stub is gone: ranking is now dense-vector cosine similarity over spaCy GloVe
+embeddings built from the eight real lesson files, with a TF-IDF lexical gate
+rejecting anisotropic false positives, verified by retrieval_eval.py
+(precision@1 = 6/6) and docs/retrieval-quality-report.md.
 
-An embedding model was the first choice; its download is blocked by the
-environment proxy (HuggingFace 403), so the ranker is TF-IDF, which is fully
-offline and deterministic.
+Vector model note
+-----------------
+sentence-transformers was the first choice but its download is blocked by the
+environment proxy (HuggingFace 403). spaCy's en_core_web_md ships as a
+pip/GitHub wheel and provides 300-dim GloVe word vectors offline, so the dense
+vector ranker runs fully offline and deterministically without that download.
 
 MCP API note
 ------------

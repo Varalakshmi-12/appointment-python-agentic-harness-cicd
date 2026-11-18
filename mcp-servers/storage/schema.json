@@ -1,4 +1,6 @@
 {
+  "tool": "storage",
+  "description": "MCP-backed persistent project-lessons store with per-role authorization and an append-only audit log.",
   "operations": [
     "write_entry",
     "read_entry",
@@ -7,5 +9,87 @@
     "delete_entry",
     "audit_read"
   ],
-  "data_store": "JSON sample store; replace with SQLite/FastMCP implementation as needed"
+  "classification_levels": [
+    "public",
+    "internal",
+    "confidential",
+    "secret"
+  ],
+  "entry_schema": {
+    "entry_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Primary key; generated on write when not supplied."
+    },
+    "project_id": {
+      "type": "string",
+      "default": "proj-lessons"
+    },
+    "entry_type": {
+      "type": "string",
+      "default": "lesson"
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "content": {
+      "type": "string"
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "public",
+        "internal",
+        "confidential",
+        "secret"
+      ],
+      "default": "internal"
+    }
+  },
+  "audit_record_schema": {
+    "operation": {
+      "type": "string",
+      "enum": [
+        "write_entry",
+        "read_entry",
+        "list_entries",
+        "update_entry",
+        "delete_entry",
+        "audit_read"
+      ]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "success",
+        "authorization_denied"
+      ]
+    },
+    "calling_role": {
+      "type": "string",
+      "description": "Subagent role supplied per call; drives least-privilege enforcement."
+    },
+    "classification": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "entry_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "enforcement": "Each call authorizes the operation for calling_role against mcp-servers/storage/allow-list.json, tags the entry with its classification, and appends one audit record. See mcp-servers/storage/server.py.",
+  "persistence": "Entries persist to a JSON store keyed by entry_id; audit records append as JSON-Lines (path via STORAGE_AUDIT_LOG)."
 }

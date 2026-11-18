@@ -1,4 +1,6 @@
 {
+  "tool": "retrieval",
+  "description": "Dense-vector retrieval over the project-lessons corpus (spaCy GloVe embeddings, cosine similarity) with per-role classification-ceiling governance and citation-bearing results.",
   "operations": [
     "retrieve"
   ],
@@ -6,5 +8,85 @@
     "public",
     "internal",
     "confidential"
-  ]
+  ],
+  "ranker": {
+    "primary": "spaCy GloVe word-vector embeddings (en_core_web_md, 300-dim), cosine similarity",
+    "lexical_gate": "TF-IDF cosine; rejects anisotropic embedding false positives",
+    "fallback": "SQLite FTS5 keyword search when the vector ranker returns nothing"
+  },
+  "document_schema": {
+    "doc_id": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "project": {
+      "type": "string"
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "public",
+        "internal",
+        "confidential"
+      ]
+    },
+    "tags": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "description": "Origin document; emitted as the citation for a result."
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date"
+    },
+    "body": {
+      "type": "string"
+    }
+  },
+  "result_schema": {
+    "doc_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "classification": {
+      "type": "string"
+    },
+    "chunk_index": {
+      "type": "integer"
+    },
+    "similarity": {
+      "type": "number",
+      "description": "GloVe embedding cosine (semantic score)."
+    },
+    "lexical_score": {
+      "type": "number",
+      "description": "TF-IDF cosine (lexical confirmation)."
+    },
+    "retrieval_method": {
+      "type": "string",
+      "enum": [
+        "vector",
+        "keyword"
+      ]
+    },
+    "text": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "last_updated": {
+      "type": "string"
+    }
+  },
+  "citation_expectation": "Every returned result carries source, title, and last_updated so the calling agent cites the lesson it used; governance.py enforces each document's classification against the calling role's ceiling before a result is returned.",
+  "enforcement": "See mcp-servers/retrieval/governance.py and mcp-servers/retrieval/retrieval-grants.json."
 }
