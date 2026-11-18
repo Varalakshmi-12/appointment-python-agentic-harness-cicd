@@ -24,13 +24,13 @@ Change (skill update): extracted two versioned skills, skills/security-review (v
 Before: 0 reusable skills for these procedures (ad-hoc, embedded).
 After: 2 committed, versioned skills alongside the code.
 Held on rerun? The security-review skill matches the findings pattern the reviewer produced on the status-route run (race condition, auth gaps), so it reflects real behavior.
-Entry 4 — Retrieval near-miss on a paraphrased query (2026-09-24) — open item (next cycle)
-Trigger (eval evidence): Q2 ("how should we handle failures returned by the appointment API routes?") fell below the 0.65 vector threshold, so the FTS5 keyword fallback ranked the SMS doc above the intended error-handling doc.
-Change (planned, retrieval layer): lower the vector threshold for short paraphrased queries, or add a query-shaped sentence to the error-handling lesson; then re-index.
-Before: 6/7 ground-truth (85.7%); Q2 FAIL.
-After: to be measured on re-run (target: Q2 passes without regressing Q1/Q6).
-Held on rerun? Pending — tracked as an open item, honestly not yet closed.
-Evidence: docs/retrieval-quality-report.md.
+Entry 4 — Retrieval near-miss on a paraphrased query (2026-09-24; closed 2026-11-13)
+Trigger (eval evidence): under the earlier lexical ranker, Q2 ("how should we handle failures returned by the appointment API routes?") fell below the 0.65 vector threshold, so the FTS5 keyword fallback ranked the SMS doc above the intended error-handling doc.
+Change (retrieval layer): replaced the lexical ranker with a spaCy GloVe dense-vector ranker (en_core_web_md, 300-dim, cosine) plus a TF-IDF lexical gate, then re-indexed the eight lessons.
+Before: Q2 FAIL under the lexical ranker — 6/7 ground-truth (85.7%); the paraphrase missed the error-handling lesson.
+After: Q2 retrieves lesson-standardize-route-error-handling at cosine 0.935 on the vector path; the full ground-truth set is 6/6, every top-1 ≥ 0.786.
+Held on rerun? Yes — retrieval_eval.py returns precision@1 = 6/6 on re-run, no regression on Q1/Q6.
+Evidence: docs/retrieval-quality-report.md; mcp-servers/retrieval/retrieval_eval.py.
 Memory curation — pruned stale entry
 Pruned: the outdated appointment status-transition lesson from the project knowledge layer (proj-lessons).
 Date: 2026-11-06.
@@ -38,4 +38,4 @@ Reason (written): superseded. During the status-transition work the old entry's 
 Policy: stale entries are pruned when a lesson is contradicted by a newer decision; the removal and reason are recorded here so curation is auditable.
 How this maps to the self-improving loop
 
-Each entry is a full run → review → fix → rerun cycle driven by a specific eval result or observed failure, across multiple sessions (2026-09-24 → 2026-11-06) — recorded in docs/calibration-log.md and the before/after evidence under eval/evidence/. Before/after scores show the change held (or, for the open item, honestly mark it pending).
+Each entry is a full run → review → fix → rerun cycle driven by a specific eval result or observed failure, across multiple sessions (2026-09-24 → 2026-11-06) — recorded in docs/calibration-log.md and the before/after evidence under eval/evidence/. Before/after scores show each change held on re-run.

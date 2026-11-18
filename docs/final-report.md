@@ -21,11 +21,14 @@ budget ceiling. All tagged `project: proj-lessons`. Indexed as 26 chunks.
 
 ## 3. Ground-truth evaluation
 Six queries covering direct match, plausible near-miss, literal-keyword, and
-classification-boundary scenarios. **Result: 6/7 applicable checks passed
-(85.7%)**, above the 80% bar. The one failure (Q2, near-miss) is documented with
-an enforcement-point fix in retrieval-validation-results.md and in Question 3.
-The classification boundary (Q4a confidential ceiling returns the cost doc; Q4b
-internal ceiling excludes it) passed — the core trust property.
+classification-boundary scenarios. **Result: 6/6 ground-truth queries passed
+(100%)** on the vector path, every top-1 cosine ≥ 0.786 and clearing the 0.65
+floor (retrieval_eval.py; per-query scores in retrieval-quality-report.md). Q2 —
+the paraphrased near-miss that failed under the earlier lexical ranker
+(retrieval-validation-results.md, the before-baseline) — now retrieves
+lesson-standardize-route-error-handling at 0.935; the before/after is the subject
+of Question 3. The classification boundary (Q4a confidential ceiling returns the
+cost doc; Q4b internal ceiling excludes it) passed — the core trust property.
 
 ## 4. Role access (enforced through tool grants, not instructions)
 Enforced in each agent's `tools:` frontmatter (the harness exposes only listed
@@ -134,23 +137,25 @@ spawned with zero tools — refusing" rather than falling back to a broader
 toolset. Both are harness-level enforcement, not honor-system compliance.
 
 ## Question 3 — What the ground-truth evaluation revealed
-The evaluation showed the retrieval system is reliable on direct and
-disambiguation queries but exposed a weakness in how it falls back to keyword
-search. One clear PASS: Q6 ("appointment shows the wrong time in another
-timezone") returned `lesson-store-appointment-times-in-utc.md` by vector
-similarity at 0.757 and correctly ranked the appointment-status doc below it —
-the disambiguation held. One FAIL: Q2 ("how should we handle failures returned
-by the appointment API routes?"), a deliberate near-miss, returned
+The first evaluation, run against the earlier lexical ranker, showed the retrieval
+system was reliable on direct and disambiguation queries but had a weakness in how
+it fell back to keyword search. Under that ranker Q2 ("how should we handle failures
+returned by the appointment API routes?"), a deliberate near-miss, returned
 `lesson-sms-notifications-were-never-wired.md` on top instead of the intended
-`lesson-standardize-route-error-handling.md`. The cause is mechanical: the vector
-score for the paraphrased query fell below the 0.65 threshold, so the server fell
-back to FTS5 keyword search, and the SMS doc — dense with "failed / returned /
-swallowed" — won on lexical overlap. To improve this without changing the answer
-key, I would fix it at the retrieval layer: lower the vector threshold so short
-paraphrases stay on the semantic path instead of dropping to keyword, or add a
-query-shaped sentence to the error-handling doc so it matches both paths. I would
-not relabel Q2's expected document to whatever the server currently returns —
-that would hide the weakness rather than fix it. More broadly, four of seven
-queries fell back to keyword, so the 0.65 threshold is likely tuned high for this
-short-query corpus; that is the first knob I would adjust and re-measure against
-the same ground-truth set.
+`lesson-standardize-route-error-handling.md`: the vector score for the paraphrase
+fell below the 0.65 threshold, so the server dropped to FTS5 keyword search, and the
+SMS doc — dense with "failed / returned / swallowed" — won on lexical overlap. Four
+of the seven checks fell back to keyword that way, which showed the 0.65 threshold
+was tuned high for this short-query corpus (the before-baseline is
+retrieval-validation-results.md).
+
+The fix was at the retrieval layer, and it did not relabel Q2's expected document to
+whatever the server returned — that would hide the weakness rather than fix it.
+Instead the lexical ranker was replaced with a spaCy GloVe dense-vector ranker
+(en_core_web_md, 300-dim, cosine) with a TF-IDF lexical gate. Re-measured against the
+same ground-truth set, all six queries now retrieve on the vector path (none fall
+back to keyword): Q2 returns `lesson-standardize-route-error-handling.md` at 0.935
+and Q6 ("appointment shows the wrong time in another timezone") returns
+`lesson-store-appointment-times-in-utc.md` at 0.945, for precision@1 = 6/6. The
+weakness was real and is now closed, verified by retrieval_eval.py and recorded in
+retrieval-quality-report.md.

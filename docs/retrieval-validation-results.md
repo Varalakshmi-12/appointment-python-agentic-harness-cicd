@@ -1,5 +1,14 @@
 # Retrieval-Validation Results — proj-lessons
 
+> **Status: superseded baseline (the "before").** This table records the earlier
+> lexical ranker (vector search with an FTS5 keyword fallback), under which Q2 missed
+> and four of seven checks fell back to keyword — 6/7. It is kept as the before-
+> snapshot of the self-improving loop. The retrieval server was then replaced with a
+> spaCy GloVe dense-vector ranker; re-measured on the same ground-truth set it now
+> scores precision@1 = 6/6 with every query on the vector path (Q2 at 0.935, Q6 at
+> 0.945). Current results: docs/retrieval-quality-report.md and
+> mcp-servers/retrieval/retrieval_eval.py.
+
 Server: retrieval MCP on :8002. Corpus: 8 docs under `project: proj-lessons`
 (indexed as 26 chunks). Threshold: 0.65 vector; FTS5 keyword fallback when no
 vector hit clears threshold. Overall bar: ≥ 80% of applicable checks pass.
