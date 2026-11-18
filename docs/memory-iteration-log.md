@@ -1,4 +1,4 @@
----
+Memory System Iteration Log
 
 ## Memory System Verification -- 2026-09-03
 
