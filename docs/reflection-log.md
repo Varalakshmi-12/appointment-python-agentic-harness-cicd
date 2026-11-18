@@ -34,7 +34,7 @@ Evidence: docs/retrieval-quality-report.md.
 Memory curation — pruned stale entry
 Pruned: the outdated appointment status-transition lesson from the project knowledge layer (proj-lessons).
 Date: 2026-11-06.
-Reason (written): superseded. During the status-transition work the old entry's transition table no longer matched the authoritative rule in decision-007; it was deleted and replaced with the corrected appointment-status-state-machine lesson. Keeping both would let retrieval surface a contradicted rule. This is why the Implementer's write path is supersession (delete-old + write-corrected), and why that very task is what exposed the over-broad delete_entry grant in Entry 1.
+Reason (written): superseded. During the status-transition work the old entry's transition table no longer matched the authoritative rule in decision-007; Keeping both would let retrieval surface a contradicted rule, so the contradicted entry was removed during curation and the corrected appointment-status-state-machine lesson written in its place. Deletion is reserved to the orchestrator — the only role that holds delete_entry — while the Implementer’s supersession path is write-only: it writes the corrected lesson and never deletes. An Implementer attempting delete-old + write-corrected on this very task is what exposed the over-broad delete_entry grant removed in Entry 1.
 Policy: stale entries are pruned when a lesson is contradicted by a newer decision; the removal and reason are recorded here so curation is auditable.
 How this maps to the self-improving loop
 
