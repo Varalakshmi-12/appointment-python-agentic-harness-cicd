@@ -63,7 +63,7 @@ deterministic test gate (`scripts/run_gate.py`), and each is shown firing by
 
 **Defence in depth (also in place):**
 - **Human checkpoints:** mandatory HALT after the Planner and before finalizing; the run waits for a person, it does not proceed on a timeout.
-- **Model scope as a cost cap:** the API key is restricted to one approved model (`anthropic/claude-haiku-4.5`), bounding per-call cost.
+- **Model scope as a cost cap:** the API key is scoped to the one approved model the agents request (model: sonnet, declared in agents/appt-*.md), so a run cannot silently escalate to a costlier model and per-call cost stays bounded to that tier.
 - **Deterministic fallback:** structural steps (tests, policy checks) run as code with zero token cost.
 
 **The test gate runs without manual help.** The deterministic test step (ADR-001)

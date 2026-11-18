@@ -15,7 +15,7 @@ over-reaching agent in under 15 minutes by following this README.**
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
 - An **OpenRouter API key** (free to create at [openrouter.ai](https://openrouter.ai)),
-  restricted to the model `anthropic/claude-haiku-4.5`.
+  restricted to the model restricted to the Sonnet model the agents request (model: sonnet, declared in agents/appt-*.md).
 - ~2 GB free disk for the image.
 - Windows users: the run commands below are given for **PowerShell**; a Git Bash / WSL
   variant is noted where it differs.
@@ -26,7 +26,7 @@ No local Python or Node setup is required — everything runs inside the contain
 
 | Variable | Required | Purpose |
 |---|---|---|
-| `OPENROUTER_API_KEY` | **Yes** | Model access (scope it to `anthropic/claude-haiku-4.5`). Injected at runtime with `-e`; never baked into the image. |
+| `OPENROUTER_API_KEY` | **Yes** | Model access (scope it to the Sonnet model the agents request: model: sonnetinagents/appt-*.md). Injected at runtime with `-e`; never baked into the image. |
 | `AGENT_ROLE` | Yes for a run | The role the container runs as (`orchestrator`, `implementer`, `reviewer`, …). Sets least-privilege scope and audit identity. |
 | `SLACK_BOT_TOKEN`, `SLACK_TEAM_ID` | Optional | Only needed for the Slack notification tool; the core pipeline does not require them. |
 | `STORAGE_AUDIT_LOG`, `RETRIEVAL_AUDIT_LOG` | Optional | Override audit-log paths (default `logs/…`). |
