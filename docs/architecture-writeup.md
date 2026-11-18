@@ -219,7 +219,7 @@ named, not because they are assumed absent.
 - `docs/governance-policy.md`, `docs/routing-and-tool-grant-map.md` — role→tool matrix
 - `docs/orchestration-diagram.md` — the workflow
 - `docs/step-classification.md` — agent/deterministic/human decisions
-- `docs/adr/ADR-001-...md` — the deterministic conversion decision
+- `docs/adr/ADR-001-tester-deterministic-conversion.md` — the deterministic conversion decision
 - `docs/calibration-log.md` — evidence (before/after, near-misses)
 - `docs/tool-evolution-drill.md` — change-under-governance evidence
 - `.github/workflows/ci.yml` — the governed pipeline

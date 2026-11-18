@@ -151,8 +151,8 @@ summary, so the boundary preamble could reference it rather than re-describing t
 run context stayed at ~5%, so summarization was not strictly necessary to avoid compaction; on a
 longer session I would also set a 60% threshold reminder in CLAUDE.md to trigger it automatically.
 
-### Artifacts
-- Pre-session plan + technique plan: committed in this repo
-- Session summary artifact (docs/session-summary.md): committed in this repo
-- This iteration-log entry: committed in this repo
-- Agent definition (security-reviewer v0.1.1): `agents/appt-security-reviewer.md`
+Artifacts
+Technique / pre-session plan: docs/technique-plan.md
+Session summary artifact: docs/session-summary.md
+This iteration log: docs/security-review-iteration-log.md
+Agent definition (security-reviewer, the v0.1.1 external-integration fix): agents/appt-security-reviewer.md

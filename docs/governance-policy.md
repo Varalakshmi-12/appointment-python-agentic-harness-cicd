@@ -162,7 +162,7 @@ These come from near-misses that are not per-role (calibration-log.md):
 ## Role: project-manager
 
 **Version:** v1.0.0
-**Defined in:** agents/appt-project-manager.md
+**Defined in:** `docs/routing-and-tool-grant-map.json` (access-matrix role; read-only, owns draft-pr-description). No separate agent-definition file — project-manager is a governance role in the least-privilege matrix, not an orchestrated subagent.
 **Container permissions:** workspace read-only, memory omitted
 
 ### MCP server and operation access
