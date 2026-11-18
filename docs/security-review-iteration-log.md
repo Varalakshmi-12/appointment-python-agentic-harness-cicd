@@ -1,6 +1,6 @@
 # Iteration Log -- Security-Reviewer Agent
 
-<!-- Most recent run at the top. Never delete past entries. -->
+
 
 ## Run 1 -- 2026-08-24 -- Baseline
 
@@ -37,14 +37,14 @@
 2. For misfire 2 (deferred): Add a severity rule tying "cost-bearing route without rate limiting" to a single consistent severity. Deferred to a future cycle.
 
 ### Changes Made
-- Fix 1 (external-integration assumptions): <643f49d> -- agent: security-reviewer v0.1.1.
+- Fix 1 (external-integration assumptions): committed to the agent definition (agent: security-reviewer v0.1.1).
 
 
 
 ## Run 2 -- 2026-08-24 -- Rerun after Fix 1 (v0.1.1)
 
 ### Run Metadata
-- Agent: security-reviewer v0.1.1 (fix: external-integration assumptions, commit <643f49d>)
+- Agent: security-reviewer v0.1.1 (fix: external-integration assumptions, in the agent definition)
 - Target: appointment-backend/app.py
 - Task: Same as Run 1 -- review app.py for security issues and produce a prioritized findings report.
 - Mode: interactive (manual approval), Sonnet 5
@@ -68,7 +68,7 @@
 ### Pass/Fail: Pass (20/20)
 
 ### Fix Verification
-- Fix 1 (external-integration assumptions, v0.1.1, commit <643f49d>): HELD and IMPROVED the target dimensions. The agent now states the assumption behind SMS/email-dependent findings and downgrades their severity when the integration's live status is unknown -- directly addressing the Run 1 misfire where Twilio-dependent findings were over-stated as Critical despite Twilio not being wired up in this codebase.
+- Fix 1 (external-integration assumptions, v0.1.1): HELD and IMPROVED the target dimensions. The agent now states the assumption behind SMS/email-dependent findings and downgrades their severity when the integration's live status is unknown -- directly addressing the Run 1 misfire where Twilio-dependent findings were over-stated as Critical despite Twilio not being wired up in this codebase.
 - Improved: Finding Accuracy (3->4), Severity Classification (3->4).
 - No regressions: Route Coverage, Actionability, and Scope Compliance all held at 4.
 - Efficiency bonus: Run 2 used fewer input tokens (81.5k vs 121.2k), cost less ($0.25 vs $0.30), and ran faster (5m 59s vs 7m 16s).
@@ -151,9 +151,8 @@ summary, so the boundary preamble could reference it rather than re-describing t
 run context stayed at ~5%, so summarization was not strictly necessary to avoid compaction; on a
 longer session I would also set a 60% threshold reminder in CLAUDE.md to trigger it automatically.
 
-### Commit SHAs
-- Pre-session plan + technique plan: <03f772b>
-- Session summary artifact (docs/session-summary.md): <d33aeec>
-- This iteration-log entry: <d33aeec>
-- Agent definition (security-reviewer v0.1.1): 795f438-era chain (see security-review-iteration-log.md)
-
+### Artifacts
+- Pre-session plan + technique plan: committed in this repo
+- Session summary artifact (docs/session-summary.md): committed in this repo
+- This iteration-log entry: committed in this repo
+- Agent definition (security-reviewer v0.1.1): `agents/appt-security-reviewer.md`

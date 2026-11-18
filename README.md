@@ -182,6 +182,10 @@ the committed audit evidence is under `eval/evidence/`.
 
 Red-team & enforcement verification: `eval/red-team-prompts.md`, `eval/enforcement-verification.md`, `scripts/probe.py`. Full write-up: `docs/final-report.md`, `docs/architecture-writeup.md`.
 
+Rubric self-check / submission guide: `docs/rubric-self-check.md`. Sanitization & data-classification note: `docs/sanitization-note.md`.
+
+Note on evidence citations (artifacts vs commit SHAs): see `docs/rubric-self-check.md`.
+
 ---
 
 ## 8. Governance & boundaries (summary)

@@ -123,5 +123,4 @@ the self-improving loop — evidence beats assertion.
   and the reasoning survives for a later reviewer.
 
 **Evidence:** calibration log entries 2026-09-29 (over-broad grant) and 2026-10-29
-(tester conversion before/after); ADR-001; commit history (feat/implementation,
-refactor/integration, adr/accepted); CI run (all gates green).
+(tester conversion before/after); ADR-001; `scripts/run_tests_deterministic.py`; CI run (all gates green).

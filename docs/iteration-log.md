@@ -62,13 +62,15 @@ Observations: Run in parallel with the lint-review workflow (Task A), each in it
 Changes made: None. This is the baseline run.
 
 ---
-## Commit History (git log --oneline)
+## Commit History — Module 1 workflow (earlier-modules repo)
 
-accd4f8 Add Task A lint review PRD and rubric to main
-90b39bb Merge import-check task; combine both iteration logs into one file
-43a1c20 Rename import-check prd/rubric to unique filenames to avoid merge conflict
-d08b3c6 Task 2: import check report and iteration log
-c5622ed Task 1: lint review report and iteration log
-52b46c5 log: run 001 baseline and run 002 -- lint review workflow, both PASS
+_These are the Module 1 task commits from the earlier-modules repository where the baseline was produced. This capstone repo's own history is separate (see `git log` here)._
+
+- Add Task A lint review PRD and rubric to main
+- Merge import-check task; combine both iteration logs into one file
+- Rename import-check prd/rubric to unique filenames to avoid merge conflict
+- Task 2: import check report and iteration log
+- Task 1: lint review report and iteration log
+- log: run 001 baseline and run 002 -- lint review workflow, both PASS
 
 ---

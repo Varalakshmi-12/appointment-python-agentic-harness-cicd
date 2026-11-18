@@ -28,9 +28,9 @@ In the earlier no-notes session, the agent had to reconstruct state through git 
 chmod-based read-only does not persist on the Windows Docker bind-mount (verified in-container multiple times: touch in .memory/knowledge/ succeeds after chmod 444/555). Read-only is enforced via the CLAUDE.md instruction instead, and the agent honored it (refusing to write to knowledge/). On a Linux-native filesystem, chmod would add OS-level enforcement as a second layer.
 
 ### Commit SHAs
-- Memory system init (structure, index, CLAUDE.md): 96521ac
-- First decision entry + coding standards + index update: ddd35cd
-- Memory architecture doc + reference index + completion: 1435608
+- Memory system init (structure, index, CLAUDE.md)
+- First decision entry + coding standards + index update
+- Memory architecture doc + reference index + completion
 
 ---
 
@@ -156,7 +156,7 @@ Simulated a credential leak into memory. Notable: when asked to CREATE the bad e
 REFUSED per the CLAUDE.md write policy, recognizing sk-ant- as an API-key format and declining to
 persist it even though it was fake -- the soft guard prevented the mistake at the source. To run
 the exercise, the human created decision-bad.md directly (simulating source #1: a person writing a
-secret manually) and committed it (commit 168cfb8), reproducing the leak.
+secret manually) and committed it (in a test commit), reproducing the leak.
 
 ### Detection (scan)
 Ran grep -r for sk-, password, secret, token under .memory/. The sk- scan found the planted key in
@@ -168,7 +168,7 @@ secret-containing file as unexpected (it hadn't written it) rather than trusting
 ### Remediation
 Removed the key from the entry, replaced the rationale with an env-var reference (ANTHROPIC_API_KEY,
 "never write to memory"), renamed the file to decision-006.md, and updated the index. Committed the
-correction. Note: the fake key remains in git history (commit 168cfb8); for a real credential the
+correction. Note: the fake key was committed only in that test file; for a real credential the
 history would also need scrubbing and the credential revoked -- out of scope here.
 
 ### Hard stop added: pre-commit hook
@@ -200,9 +200,9 @@ Notable: When asked to create a memory entry containing a credential-shaped stri
 
 
 ## SHA references
-Initial observation -- commit of memory state at test time: 168cfb8 (fake key committed in decision-bad.md)
-Remediation -- fix commit: e94e80a (key removed, replaced with env-var reference); 
-safeguards: 286a3de (classification policy in CLAUDE.md + architecture doc)
+Initial observation -- memory state at test time: fake key committed in decision-bad.md
+Remediation -- fix (key removed, replaced with env-var reference); 
+safeguards: classification policy in CLAUDE.md + architecture doc
 Rerun result -- the pre-commit hook (in .git/hooks/, not committed) blocked a real host commit of .memory/test-secret.txt containing password=test123. No commit SHA (blocked before commit); evidence is the WARNING/Commit blocked output.
 Pass/Fail: Pass -- the hook stopped the secret before it entered Git history, and passes clean when no secret is staged.
 
@@ -246,7 +246,7 @@ policy (review due 2026-12-02, not stale). This confirms the lab's work is durab
 fresh session can locate and use it.
 
 ### Commit
-- Implementation + memory update: ad98691
+- Implementation + memory update
 
 ### Outcome
 The memory system guided real, correctly-scoped work (the agent knew what to fix, how to fix it,
