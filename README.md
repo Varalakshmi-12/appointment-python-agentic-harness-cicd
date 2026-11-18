@@ -657,7 +657,7 @@ docker run --rm -v "$PWD":/workspace agentic_engineer_4 \
 
 ### Notes
 
-- `eval/test_policy.py` reads `.skills/*.md` for skill-scope enforcement. The `.skills/` directory is currently empty — add per-role skill scope files there as you build out the governance lesson content.
+- `eval/test_policy.py` reads `.skills/*.md` for skill-scope enforcement. The `.skills/` directory is currently empty — per-role skill-scope files are added there as the governance lesson content is built out.
 - Tests that check directory structure (`.agents`, `.skills`, `docs/adr`, etc.) expect those directories to exist in the bind-mounted workspace. They are created automatically when the container runs without a bind-mount.
 - `scripts/run-reviewer.py` is a safe sample that does **not** call a live LLM. It writes a deterministic advisory review so the CI workflow can be exercised without API spend.
 - Runtime logs belong under `logs/` and are gitignored.
