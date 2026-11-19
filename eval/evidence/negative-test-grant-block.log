@@ -1,0 +1,25 @@
+# Negative test - unauthorized tool grant blocked by the eval gate
+# The allow-list is restored automatically; the repo is left clean.
+
+Step 1 - introduced unauthorized grant: 'implementer' added to delete_entry in
+         mcp-servers/storage/allow-list.json (delete_entry now: ['implementer', 'orchestrator']).
+
+Step 2 - ran the governance enforcement test (eval/test_per_role_enforcement.py):
+           eval/test_per_role_enforcement.py:36: Failed
+           =========================== short test summary info ============================
+           FAILED eval/test_per_role_enforcement.py::test_implementer_cannot_delete_even_in_orchestrator_container
+           1 failed, 4 passed in 3.03s
+         => test FAILED, as required.
+
+Step 3 - ran the CI gate (scripts/run_gate.py --tests eval/, the Deterministic Test Gate command):
+           gate status: fail (controls active; spent $0.0010, timeout 300s)
+         => gate status 'fail' => pull request BLOCKED, as required.
+
+Step 4 - corrected the grant: restored mcp-servers/storage/allow-list.json (verified clean).
+
+Step 5 - re-ran the governance enforcement test after correction:
+           .....                                                                    [100%]
+           5 passed in 1.17s
+         => test PASSED, as required.
+
+RESULT: PASS - the eval gate blocked the unauthorized grant and passed the corrected one.
