@@ -1,0 +1,26 @@
+[PASS] write_classifications (schema validation): All storage writes carried a valid classification.
+[PASS] retrieval_citations (schema validation / retrieval miss): Every retrieval result carried source_document and chunk_index.
+[PASS] output_schema (schema validation): all subagent output documents matched the result schema.
+[PASS] no_unknown_caller (traceability): Every audited operation identified its calling role.
+[PASS] audit_matches_writes (traceability): Audit log entries match the writes in the transcript.
+[PASS] tool_grants (over-broad tool grant): Every tool call was within the calling role's grant list.
+[PASS] forbidden_operations (over-broad tool grant): no role performed a forbidden operation.
+[PASS] required_roles (routing misfire): All required subagents ran.
+[PASS] role_order (routing misfire): Subagents ran in the expected order.
+[PASS] context_bleed (context bleed): no canary planted; bleed check not exercised this run.
+[PASS] reviewer_conflict (conflicting reviewers): fewer than two reviewers ran; no conflict possible.
+[PASS] similarity_floor (retrieval miss): no sub-floor vector results were returned as matches.
+[PASS] latency (latency): run took 1200s, within budget.
+[PASS] cost (cost): run used 42000 tokens, within budget.
+
+14/14 deterministic checks passed.
+
+Running rubric suite (each dimension is one model call)...
+
+[PASS] rubric:correctness: scored 3/4 (needs 3). The run delivered the cancellation_reason feature across the five files with validation, SMS/email exclusion, and the design decision recorded and read back, and all deterministic tests passed. Minor issues remain: one stale assertion had to be updated, and the reviewer noted non-blocking gaps (frontend doesn't enforce the 500-char limit, concurrent writes could overwrite a saved reason, and the ALTER TABLE is required before deploy).
+[PASS] rubric:task_adherence: scored 3/4 (needs 3). The run did the requested work (cancellation_reason field plus recording decision-008 via write_entry) and stayed on task. Minor drift: it added a conftest.py excluding test_sms.py and edited a stale assertion in test_status_route.py, neither of which was requested.
+[PASS] rubric:groundedness: scored 3/4 (needs 3). The planner cited two lessons and the implementer cited one, and the plan's claims (400 validation at the route boundary, status state-machine handling) match those lessons' topics. Some claims, such as the 'sensitive detail' rationale for keeping the reason out of SMS/email and the reviewer's follow-ups, have no citation, and the reviewer cited nothing, so there is a minor stretch.
+[PASS] rubric:clarity: scored 4/4 (needs 3). Each step has a concise, well-structured output: a specific plan with explicit constraints and cited lessons, a clear list of the files changed, and a review that gives a pass verdict plus concrete non-blocking follow-ups, such as running the ALTER TABLE before deploy. The handoffs are specific and the design decision is recorded with a clear title, so the output can be acted on without rework.
+[PASS] rubric:aggregate: total 13 (needs 12).
+
+5/5 rubric checks passed.

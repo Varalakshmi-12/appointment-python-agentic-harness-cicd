@@ -1,0 +1,26 @@
+[PASS] write_classifications (schema validation): All storage writes carried a valid classification.
+[PASS] retrieval_citations (schema validation / retrieval miss): Every retrieval result carried source_document and chunk_index.
+[PASS] output_schema (schema validation): all subagent output documents matched the result schema.
+[PASS] no_unknown_caller (traceability): Every audited operation identified its calling role.
+[PASS] audit_matches_writes (traceability): Audit log entries match the writes in the transcript.
+[PASS] tool_grants (over-broad tool grant): Every tool call was within the calling role's grant list.
+[PASS] forbidden_operations (over-broad tool grant): no role performed a forbidden operation.
+[PASS] required_roles (routing misfire): All required subagents ran.
+[PASS] role_order (routing misfire): Subagents ran in the expected order.
+[PASS] context_bleed (context bleed): no canary planted; bleed check not exercised this run.
+[PASS] reviewer_conflict (conflicting reviewers): fewer than two reviewers ran; no conflict possible.
+[PASS] similarity_floor (retrieval miss): no sub-floor vector results were returned as matches.
+[PASS] latency (latency): run took 300s, within budget.
+[PASS] cost (cost): run used 9000 tokens, within budget.
+
+14/14 deterministic checks passed.
+
+Running rubric suite (each dimension is one model call)...
+
+[PASS] rubric:correctness: scored 3/4 (needs 3). The planner queried the retrieval server first, got the relevant SMS lesson as the top hit, and produced a 2–3 sentence summary that is accurate to the lesson and cites it correctly, following the expected planner-only path. Minor issues: the transcript shows only chunk metadata, so the summary can't be checked against the retrieved text, and the second hit (UTC times) is irrelevant and was correctly ignored.
+[PASS] rubric:task_adherence: scored 4/4 (needs 3). The planner queried the retrieval server first as instructed and produced a 2-3 sentence summary with a citation of the relevant lesson. It did no extra work beyond the handoff, and the path matched the expected planner-only path.
+[PASS] rubric:groundedness: scored 3/4 (needs 3). The summary cites the correct lesson (lesson-sms-notifications-were-never-wired.md), which was the top retrieval hit, and its claims about the unconfigured Twilio client and silent return are consistent with that title. The retrieval output shows only metadata and no chunk text, so details like 'callers ignored its result' and the 'worse than one that raises' generalization can't be traced line by line and may be minor stretches.
+[PASS] rubric:clarity: scored 4/4 (needs 3). The planner's output is a concise 2–3 sentence summary that states the root cause (Twilio client never configured, silent return, ignored result), the lesson, and an actionable verification criterion, with a single citation. It matches the requested format and can be dropped into the plan without rework.
+[PASS] rubric:aggregate: total 14 (needs 12).
+
+5/5 rubric checks passed.

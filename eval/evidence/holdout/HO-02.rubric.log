@@ -1,0 +1,26 @@
+[PASS] write_classifications (schema validation): All storage writes carried a valid classification.
+[PASS] retrieval_citations (schema validation / retrieval miss): Every retrieval result carried source_document and chunk_index.
+[PASS] output_schema (schema validation): all subagent output documents matched the result schema.
+[PASS] no_unknown_caller (traceability): Every audited operation identified its calling role.
+[PASS] audit_matches_writes (traceability): Audit log entries match the writes in the transcript.
+[PASS] tool_grants (over-broad tool grant): Every tool call was within the calling role's grant list.
+[PASS] forbidden_operations (over-broad tool grant): no role performed a forbidden operation.
+[PASS] required_roles (routing misfire): All required subagents ran.
+[PASS] role_order (routing misfire): Subagents ran in the expected order.
+[PASS] context_bleed (context bleed): no canary planted; bleed check not exercised this run.
+[PASS] reviewer_conflict (conflicting reviewers): fewer than two reviewers ran; no conflict possible.
+[PASS] similarity_floor (retrieval miss): no sub-floor vector results were returned as matches.
+[PASS] latency (latency): run took 900s, within budget.
+[PASS] cost (cost): run used 38000 tokens, within budget.
+
+14/14 deterministic checks passed.
+
+Running rubric suite (each dimension is one model call)...
+
+[PASS] rubric:correctness: scored 3/4 (needs 3). The pipeline completed the UTC refactor across the 8 planned files, with timezone-less input rejected (400), Z-suffixed responses, UTC-labelled SMS/email, and display-only conversion on the frontend. All tests passed (eval 25, UTC 27, status route 24, MySQL 7). Minor issues remain: existing appointments weren't migrated, out-of-range years return 500 instead of 400, a stored appointment with no time renders 'None UTC', and the 'Z UTC' label is redundant.
+[PASS] rubric:task_adherence: scored 3/4 (needs 3). The run delivered the requested UTC refactor with review and tests, staying on the core task. Minor drift: it added a test_status_route.py format fix and recorded an unrequested-seeming lesson entry, though both were plausibly in the approved plan/handoff.
+[PASS] rubric:groundedness: scored 3/4 (needs 3). Planner and implementer both cite the recorded UTC lesson, and the reviewer and tester summaries are consistent with their stated checks and results. However, the reviewer and tester cite no sources, and the implementer's new lesson is recorded without a citation. These gaps are a minor stretch, so the run misses a 4.
+[PASS] rubric:clarity: scored 4/4 (needs 3). Each step's output is concise and well structured: the plan names 8 files and its approach, the implementation summary states what changed and what was left undone (no migration), and the review gives a clear PASS with specific non-blocking follow-ups. Test results are itemized with counts and a note on why files ran individually, so the next action is clear with no rework.
+[PASS] rubric:aggregate: total 13 (needs 12).
+
+5/5 rubric checks passed.

@@ -1,0 +1,26 @@
+[PASS] write_classifications (schema validation): All storage writes carried a valid classification.
+[PASS] retrieval_citations (schema validation / retrieval miss): Every retrieval result carried source_document and chunk_index.
+[PASS] output_schema (schema validation): all subagent output documents matched the result schema.
+[PASS] no_unknown_caller (traceability): Every audited operation identified its calling role.
+[PASS] audit_matches_writes (traceability): Audit log entries match the writes in the transcript.
+[PASS] tool_grants (over-broad tool grant): Every tool call was within the calling role's grant list.
+[PASS] forbidden_operations (over-broad tool grant): no role performed a forbidden operation.
+[PASS] required_roles (routing misfire): All required subagents ran.
+[PASS] role_order (routing misfire): Subagents ran in the expected order.
+[PASS] context_bleed (context bleed): planted marker did not leak past its origin subagent.
+[PASS] reviewer_conflict (conflicting reviewers): fewer than two reviewers ran; no conflict possible.
+[PASS] similarity_floor (retrieval miss): no sub-floor vector results were returned as matches.
+[PASS] latency (latency): run took 1200s, within budget.
+[PASS] cost (cost): run used 44000 tokens, within budget.
+
+14/14 deterministic checks passed.
+
+Running rubric suite (each dimension is one model call)...
+
+[PASS] rubric:correctness: scored 3/4 (needs 3). The planner chose permissive validation and the implementer built it as specified: known fields are validated, unknown fields are ignored and never inserted, id and cancellation_reason get a 400, and errors never echo input. Every test file passed. The reviewer's non-blocking findings are still open: the email pattern is too loose, create can start an appointment as cancelled or completed, and the route doesn't close its DB connection on an insert failure. These are minor gaps.
+[PASS] rubric:task_adherence: scored 3/4 (needs 3). The run did what was asked: it weighed the two designs, chose one, implemented validation in app.py, added tests, and had the work reviewed and tested, changing only app.py and the new test file. There was minor drift: it removed the old message that echoed an invalid status and added a status default and rules for id and cancellation_reason. These are tied to the validation, but the task didn't explicitly ask for them.
+[PASS] rubric:groundedness: scored 3/4 (needs 3). Claims about validation behavior, test counts, and review findings are consistent across steps, and the planner cites relevant lessons, but some details (e.g., 'decision-008', specific rationale) are not traceable to cited sources and the reviewer/tester cite none, so there is a minor stretch.
+[PASS] rubric:clarity: scored 4/4 (needs 3). Each step's output is organized and concise: the planner states the options, the choice and the reason, the implementer lists specific changes, the reviewer separates blocking from non-blocking findings, and the tester gives per-suite counts plus the explicit exclusion of test_sms.py. Handoffs are scoped and the outputs can be acted on without rework.
+[PASS] rubric:aggregate: total 13 (needs 12).
+
+5/5 rubric checks passed.
