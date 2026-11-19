@@ -7,12 +7,12 @@ Solution. A governed multi-agent pipeline: specialized agents fix an issue toget
 Projected impact (labeled projections). Illustrative — ~40 small backend fixes/month, loaded engineer cost ~$75/hr; real volume and rates change the totals, not the method. Measured inputs are marked.
 
 Lever	Basis	Monthly
-Review labor returned	automated review replaces ~8 min manual review/fix (measured)	~5 hrs → ~$400
+Review labor returned (gross) | automated security review replaces the manual code-review step — projected ~8 min/fix (Module-1 review baselines; the ungoverned run shipped unreviewed, so this is projected, not measured here) | ~5 hrs → ~$400
 Pipeline model spend	~$0.90/fix (measured) × 40 fixes	~$36
 Rework avoided	each fix ships a regression test; one avoided recurrence ≈ 2–4 eng-hrs	~$150–300 each
 Right-tool conversion	one stable step moved agent → code: $0, instant (measured)	removes its cost
 
-Net: ~$360+/mo of review time returned vs ~$36 model spend, before counting avoided rework — the governance premium pays for itself at low volume and grows with fix volume.
+Net: ~$400/mo gross review labor automated vs ~$36 model spend. The figure counts the one manual step the pipeline automates (code review); the pipeline still needs a brief human plan-approval checkpoint (part of the measured ~15-min cycle, mostly wait-time), so net human time returned is lower. Even so, the review premium pays for itself at low volume, before avoided rework.
 
 Proof. On one matched defect the governed pipeline scored 20/20 on the fix rubric vs 13/20 for a single ungoverned agent — adding a regression test, an independent security review, and an audit trail the lone agent never produced. A guardrail also caught a real over-reach (an agent wrongly granted delete access), and a weakened guardrail was blocked automatically.
 
