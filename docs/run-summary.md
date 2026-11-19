@@ -44,3 +44,12 @@ appt-tester could not run because the `coursetools` MCP tools were unavailable. 
 - Planner output was approved by the human before any code was written.
 - The implementer made a stray `write_entry` call (key `noop`) to the storage MCP server. It carries no lesson and can be deleted.
 - Final confirmation was given by the human.
+
+Update (resolved): the test step now runs without human input
+
+The "Test outcome" above records a real limitation of this early interactive run: the agentic appt-tester had no working test tool (coursetools unavailable) and the orchestrator subagent has no shell, so the deterministic result was run and reported by the session rather than produced autonomously. That gap is exactly what two committed changes closed:
+
+ADR-001 converted the tester to scripts/run_tests_deterministic.py, removing the coursetools dependency entirely.
+scripts/run_gate.py wraps it as an autonomous gate (timeout + budget controls active) that runs the suite and returns pass/fail with no human test-result input.
+
+Run autonomously, the gate reports status "pass" with controls active (timeout 300s, per-run budget) and no manual input - recorded in eval/evidence/autonomous-gate-run.json (+ .log). The CI Deterministic Test Gate runs the same command (python scripts/run_gate.py --tests eval/) unattended on every push (.github/workflows/ci.yml). A fuller autonomous-run write-up with the reliability controls firing is in docs/autonomous-run-summary.md. This run-summary is retained as the historical "before"; the autonomous "after" is the gate run above.

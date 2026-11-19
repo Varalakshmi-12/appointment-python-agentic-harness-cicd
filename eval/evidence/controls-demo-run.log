@@ -1,0 +1,9 @@
+Firing each control once:
+
+  1. timeout        -> FIRED  (slow exceeded 1s)
+  2. retry          -> FIRED  (retried 1x, then succeeded)
+  3. max-iterations -> FIRED  (phase 'implement<->review' failed 2 times (limit 2))
+  4. per-call budget-> FIRED  (call 'oversized-call' cost $0.2000 > per-call cap $0.0500)
+  5. per-workflow   -> FIRED  (workflow spend $0.1200 > per-workflow cap $0.1000)
+
+All five fired. Evidence written to eval/evidence/controls-firing-evidence.jsonl

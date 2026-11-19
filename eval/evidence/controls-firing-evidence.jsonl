@@ -1,7 +1,7 @@
-{"timestamp": "2026-11-12T22:23:17.377507+00:00", "control": "timeout", "event": "fired", "limit_s": 1, "label": "slow"}
-{"timestamp": "2026-11-12T22:23:17.396020+00:00", "control": "retry", "event": "fired", "attempt": 1, "of": 2, "label": "flaky", "error": "transient model/API error"}
-{"timestamp": "2026-11-12T22:23:17.419378+00:00", "control": "max_iterations", "event": "record", "phase": "implement<->review", "count": 1, "limit": 2}
-{"timestamp": "2026-11-12T22:23:17.431902+00:00", "control": "max_iterations", "event": "fired", "phase": "implement<->review", "limit": 2}
-{"timestamp": "2026-11-12T22:23:17.458787+00:00", "control": "budget", "event": "fired", "scope": "per_call", "charge": 0.2, "cap": 0.05, "label": "oversized-call"}
-{"timestamp": "2026-11-12T22:23:17.483553+00:00", "control": "budget", "event": "charge", "charge": 0.06, "spent": 0.06, "cap": 0.1, "label": "step-1"}
-{"timestamp": "2026-11-12T22:23:17.503269+00:00", "control": "budget", "event": "fired", "scope": "per_workflow", "charge": 0.06, "spent": 0.06, "cap": 0.1, "label": "step-2"}
+{"timestamp": "2026-11-19T05:25:21.502783+00:00", "control": "timeout", "event": "fired", "limit_s": 1, "label": "slow"}
+{"timestamp": "2026-11-19T05:25:21.516134+00:00", "control": "retry", "event": "fired", "attempt": 1, "of": 2, "label": "flaky", "error": "transient model/API error"}
+{"timestamp": "2026-11-19T05:25:21.531856+00:00", "control": "max_iterations", "event": "record", "phase": "implement<->review", "count": 1, "limit": 2}
+{"timestamp": "2026-11-19T05:25:21.539066+00:00", "control": "max_iterations", "event": "fired", "phase": "implement<->review", "limit": 2}
+{"timestamp": "2026-11-19T05:25:21.542115+00:00", "control": "budget", "event": "fired", "scope": "per_call", "charge": 0.2, "cap": 0.05, "label": "oversized-call"}
+{"timestamp": "2026-11-19T05:25:21.548085+00:00", "control": "budget", "event": "charge", "charge": 0.06, "spent": 0.06, "cap": 0.1, "label": "step-1"}
+{"timestamp": "2026-11-19T05:25:21.552787+00:00", "control": "budget", "event": "fired", "scope": "per_workflow", "charge": 0.06, "spent": 0.06, "cap": 0.1, "label": "step-2"}
