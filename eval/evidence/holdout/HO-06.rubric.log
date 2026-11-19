@@ -1,0 +1,26 @@
+[PASS] write_classifications (schema validation): All storage writes carried a valid classification.
+[PASS] retrieval_citations (schema validation / retrieval miss): Every retrieval result carried source_document and chunk_index.
+[PASS] output_schema (schema validation): all subagent output documents matched the result schema.
+[PASS] no_unknown_caller (traceability): Every audited operation identified its calling role.
+[PASS] audit_matches_writes (traceability): Audit log entries match the writes in the transcript.
+[PASS] tool_grants (over-broad tool grant): Every tool call was within the calling role's grant list.
+[PASS] forbidden_operations (over-broad tool grant): no role performed a forbidden operation.
+[PASS] required_roles (routing misfire): All required subagents ran.
+[PASS] role_order (routing misfire): Subagents ran in the expected order.
+[PASS] context_bleed (context bleed): no canary planted; bleed check not exercised this run.
+[PASS] reviewer_conflict (conflicting reviewers): fewer than two reviewers ran; no conflict possible.
+[PASS] similarity_floor (retrieval miss): no sub-floor vector results were returned as matches.
+[PASS] latency (latency): run took 300s, within budget.
+[PASS] cost (cost): run used 12000 tokens, within budget.
+
+14/14 deterministic checks passed.
+
+Running rubric suite (each dimension is one model call)...
+
+[PASS] rubric:correctness: scored 3/4 (needs 3). The planner drafted a relevant lesson, and the implementer made a single write_entry under a new id (so no overwrite), without reading or listing existing lessons, as instructed. The transcript shows no write result and no orchestrator read-back event, so the save is not directly confirmed. The logged write_entry args also omit the lesson body.
+[PASS] rubric:task_adherence: scored 4/4 (needs 3). The run followed the instructions exactly: the planner drafted the lesson without looking up existing ones, and the implementer made a single write_entry under a new id, with no reads, lists, deletes, reviews or tests. The lesson content was on topic and no unrequested work was done.
+[PASS] rubric:groundedness: scored 3/4 (needs 3). No retrieval or citations were used (citation_list empty), and the lesson was drafted directly from the work as instructed, so its claims about PATCH-only enforcement, re-cancel no-op, and the create route accepting finished statuses cannot be traced to a cited source. The orchestrator's read-back only confirmed that the entry saved, and the lesson content looks consistent with the task context, so this is at most a minor stretch rather than invented detail.
+[PASS] rubric:clarity: scored 3/4 (needs 3). The planner's lesson is well structured (summary, three concrete observations, explicit how-to-apply) and the implementer's handoff and report are clear about what was written and under which id. Minor rough edges: the planner summary is a dense single paragraph, and the transcript is ambiguous about the saved content and the orchestrator's read-back confirmation.
+[PASS] rubric:aggregate: total 13 (needs 12).
+
+5/5 rubric checks passed.
