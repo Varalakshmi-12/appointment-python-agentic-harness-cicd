@@ -2,7 +2,7 @@
 
 Run from the repository root:
     
-    python3 eval/test_rubric_suite.py eval/evidence/DEV-appt-status.json
+    python3 eval/harness_rubric_suite.py eval/evidence/DEV-appt-status.json
 """
 
 import json

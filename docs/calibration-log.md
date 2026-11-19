@@ -38,7 +38,7 @@ HO-06	Over-broad tool grant	14/14	Implementer held write_entry only (no read/lis
 
 A before-fix artifact (HO-06-before-fix.json/.log, 13/14 with calling_role: "unknown") is kept alongside the 14/14 native re-run to show the storage-audit fix closing no_unknown_caller.
 
-Rubric gate: every transcript clears the deterministic floor, so the agent-as-judge suite (eval/harness_rubric_suite.py) is eligible to score each.
+Rubric gate: every transcript clears the deterministic floor, so the agent-as-judge suite (eval/harness_rubric_suite.py, claude-sonnet-5-5 judge) was then run on HO-01 through HO-05. All five pass the rubric (each dimension >= 3, aggregate >= 12): HO-01 14/16, HO-02 13/16, HO-03 13/16, HO-04 13/16, HO-05 14/16. Full judge output with per-dimension justifications is committed as eval/evidence/holdout/HO-0X.rubric.log; the summary is docs/holdout-rubric-results.md.
 Regression: the six holdouts are the regression set. All pass after the grant fix, the storage-audit fix, and the retrieval vector-tool replacement — no prior check regressed.
 
 Gaps closed this cycle (were failing on the earlier HO-06):
@@ -66,7 +66,7 @@ Predictability: verdict identical across all 3 runs (status "pass", exit_code 0)
 Audit clarity: the whole script is ~50 readable lines; a reviewer understands it without a transcript. classify_exit_code is a pure function covered by unit tests.
 Quality: eval/test_deterministic_step.py passes 6/6, including the three-state (pass / fail / error) limitation. No existing deterministic harness check regressed (the conversion adds a step; it removes none of the governance checks).
 Regression check: none of the deterministic governance checks (forbidden_operations, tool_grants, audit_matches_writes, no_unknown_caller) depend on appt-tester, so the conversion causes no regression. The tester gate now completes instead of halting.
-Evidence: implementation scripts/run_tests_deterministic.py; unit-test run 6/6 passing in container (eval/test_deterministic_step.py).
+Evidence: implementation scripts/run_tests_deterministic.py; unit-test run 6/6 passing in container (eval/test_deterministic_step.py); the converted tester step runs in holdouts HO-02, HO-04 and HO-05, each clearing the deterministic gate (14/14) and the rubric (13-14/16) - eval/evidence/holdout/HO-02.rubric.log, HO-04.rubric.log, HO-05.rubric.log.
 2026-11-12: Shared-role identity (storage attribution)
 Failure mode: Shared-process role identity. The storage server fixed its calling_role once at launch from the container's AGENT_ROLE, so in a live session every subagent's write was attributed to the single container role (orchestrator), and the first HO-06 run even logged calling_role: "unknown". Per-role least-privilege could not hold within a session — the Implementer's call was indistinguishable from the orchestrator's.
 Check that caught it: no_unknown_caller (FAIL on the first HO-06 run, 13/14) surfaced the attribution gap. The live retrieval audit confirmed the root cause by contrast: retrieval already takes calling_role as a tool argument and correctly logged planner / security-reviewer, while storage logged only orchestrator.
