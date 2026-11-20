@@ -14,6 +14,8 @@ appointment status-transition route* (`PATCH /appointments/<id>/status`). The pi
 plans the change, implements it, security-reviews it, and runs the tests — with governance
 and human checkpoints around every step.
 
+The target codebase — the Flask/MySQL/React appointment app the pipeline operates on — is a real application with an incremental public commit history at https://github.com/Varalakshmi-12/Appointment-Python (built March—August 2026), not a fixture created for this capstone.
+
 **Delivery path:** job-seeker / no-deployment. The pipeline runs on the application's own
 source and a representative internal-lessons corpus; no real customer or patient data is
 used. In a real deployment the same controls (classification ceilings, audit logging,

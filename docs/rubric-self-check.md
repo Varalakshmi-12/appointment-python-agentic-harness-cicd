@@ -36,7 +36,7 @@ before/after evidence under `eval/evidence/`, the relevant calibration-log entry
 scored holdout run — rather than by a commit SHA that would not resolve here. Where a
 specific change is referenced, the reader can open the named file or evidence directly.
 The self-improving cadence itself is documented in `docs/reflection-log.md` and
-`docs/calibration-log.md` with before/after scores.
+`docs/calibration-log.md` with before/after scores. The same cadence is consolidated into a dated traceability table in `docs/improvement-traceability.md` — six cycles (2026-09-24 → 2026-11-12), each mapping failure → eval result → change → rerun to its committed evidence. The base codebase the agents operate on has its own real, incremental public history at https://github.com/Varalakshmi-12/Appointment-Python.
 
 
 ## 1 · Workflow Scoping (2 → 4)
@@ -52,7 +52,7 @@ The self-improving cadence itself is documented in `docs/reflection-log.md` and
 
 ## 4 · Agent, Skills & Memory (3 → 4)
 **Comment:** "Commit the project and knowledge layers (scrubbed), prune a stale entry with a written reason, and gather reflections into one log with before and after scores."
-**Addressed:** The full memory tree is committed and scrubbed (`.memory/project/`, `.memory/knowledge/`, `.memory/reference/`). `docs/reflection-log.md` consolidates the self-improving loop: each entry names the trigger, the change, before/after scores, and whether it held on a rerun, plus a "Memory curation" section recording a pruned stale lesson (the outdated status-transition rule, superseded by `decision-007` and replaced with the corrected state-machine lesson) with a written reason.
+**Addressed:** The full memory tree is committed and scrubbed (`.memory/project/`, `.memory/knowledge/`, `.memory/reference/`). `docs/reflection-log.md` consolidates the self-improving loop: each entry names the trigger, the change, before/after scores, and whether it held on a rerun, plus a "Memory curation" section recording a pruned stale lesson (the outdated status-transition rule, superseded by `decision-007` and replaced with the corrected state-machine lesson) with a written reason. The run → review → fix → rerun cadence across the course is consolidated, with dated committed evidence per cycle, in `docs/improvement-traceability.md`.
 
 ## 5 · Orchestration & MCP Tools (2 → 4)
 **Comment:** "The required vector tool isn't there — the committed server is a word-counting sample."
@@ -75,7 +75,7 @@ Deterministic conversion with before/after evidence (ADR-001), agent/determinist
 
 ## 10 · Iteration Narrative & Impact (2 → 4)
 **Comment:** "Your 'before' is a lint check and your 'after' is a test script. Measure the full pipeline against one matching baseline task, then report all five metrics."
-**Addressed:** `docs/impact-report.md` now reports a controlled like-for-like experiment: the same defect (`test_sms.py` import-time Twilio call) fixed two ways — a single ungoverned agent vs the full governed pipeline — on the same model, in this repo. All five metrics at the pipeline level (quality 13/20 vs 20/20, review, defect rate, cycle time, cost $0.15 vs $0.90), with measured vs projected clearly separated. Evidence in `eval/evidence/impact/{ungoverned,governed}/`; improvement cycles across the course in `docs/reflection-log.md` and `docs/security-review-iteration-log.md`.
+**Addressed:** `docs/impact-report.md` now reports a controlled like-for-like experiment: the same defect (`test_sms.py` import-time Twilio call) fixed two ways — a single ungoverned agent vs the full governed pipeline — on the same model, in this repo. All five metrics at the pipeline level (quality 13/20 vs 20/20, review, defect rate, cycle time, cost $0.15 vs $0.90), with measured vs projected clearly separated. Evidence in `eval/evidence/impact/{ungoverned,governed}/`; improvement cycles across the course in `docs/reflection-log.md`, `docs/security-review-iteration-log.md`, and the dated `docs/improvement-traceability.md` (six cycles, 2026-09-24 → 2026-11-12).
 
 ## 11 · Stakeholder Communication (3 → 4)
 **Comment:** "Add hours and dollars as labeled projections. The one-pager is also not necessarily one page."
